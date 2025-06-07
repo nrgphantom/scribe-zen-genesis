@@ -57,7 +57,7 @@ export async function generateBookIdea(bookName?: string, description?: string) 
        ${bookName ? `Book Name: ${bookName}` : ''}
        ${description ? `Description: ${description}` : ''}
        
-       Provide a compelling book title, detailed outline with chapter breakdown, main themes, target audience, and key plot points. Make it engaging and marketable.`
+       Provide a compelling book title, detailed outline with chapter breakdown, main themes, target audience, and key plot points. Format the response professionally with proper headings and structure. Use markdown formatting for emphasis but avoid unnecessary symbols like asterisks for bullet points.`
     : `Generate a completely original and creative book idea. Include:
        - A compelling book title
        - Genre and target audience
@@ -66,9 +66,9 @@ export async function generateBookIdea(bookName?: string, description?: string) 
        - Key characters or concepts
        - Unique selling points
        
-       Make it fresh, engaging, and marketable.`;
+       Format the response professionally with proper headings and structure. Use markdown formatting for emphasis but avoid unnecessary symbols like asterisks for bullet points.`;
 
-  const systemPrompt = "You are a bestselling author and publishing expert. Create detailed, engaging book concepts that would appeal to readers and publishers.";
+  const systemPrompt = "You are a bestselling author and publishing expert. Create detailed, engaging book concepts that would appeal to readers and publishers. Format your response professionally using proper markdown headings, bold text for emphasis, and clean structure. Avoid using asterisks or other symbols unnecessarily. Write in a clear, professional tone.";
   
   return await callOpenRouter(API_CONFIGS.deepseek, prompt, systemPrompt);
 }
@@ -83,13 +83,13 @@ export async function generateBookOutline(title: string, description: string, ch
     1. A refined book summary
     2. Chapter-by-chapter breakdown with:
        - Chapter number and title
-       - Brief chapter summary
+       - Brief chapter summary (2-3 sentences)
        - Key points to cover
        - How it connects to the overall narrative
     
-    Make each chapter substantial and ensure good flow between chapters.`;
+    Format the response professionally with proper headings. Use clean formatting without unnecessary symbols. Each chapter should be substantial and ensure good flow between chapters.`;
 
-  const systemPrompt = "You are a professional book editor and author. Create well-structured, engaging book outlines that follow proper storytelling principles.";
+  const systemPrompt = "You are a professional book editor and author. Create well-structured, engaging book outlines that follow proper storytelling principles. Format your response with clean markdown headings and professional structure. Avoid using asterisks or other symbols unnecessarily.";
   
   return await callOpenRouter(API_CONFIGS.qwen, prompt, systemPrompt);
 }
@@ -109,20 +109,24 @@ export async function generateChapterContent(
   const prompt = `Write Chapter ${chapterNumber}: "${chapterTitle}" for the book "${bookTitle}".
     
     Book Description: ${bookDescription}
-    Target Word Count: ${targetWords} words
+    Target Word Count: Approximately ${targetWords} words (flexible range: ${Math.floor(targetWords * 0.8)}-${Math.floor(targetWords * 1.2)} words)
     ${contextInfo}
     
     Requirements:
-    - Write engaging, high-quality content
+    - Write engaging, high-quality content that flows naturally
     - Maintain consistency with the book's theme and style
-    - Include proper chapter structure with good pacing
+    - Include proper paragraph structure with good pacing
     - Ensure it flows well with previous chapters
     - Write in a professional, publishable style
-    - Aim for approximately ${targetWords} words
+    - Use proper formatting with paragraphs and natural breaks
+    - Target approximately ${targetWords} words but prioritize quality over exact word count
+    - Use italics for emphasis and thoughts when appropriate
+    - Use bold text for important concepts or chapter subheadings
+    - Avoid unnecessary symbols like asterisks
     
-    Focus on storytelling, character development (if applicable), and advancing the main themes.`;
+    Focus on storytelling, character development (if applicable), and advancing the main themes. Write complete, well-developed content that readers will find engaging.`;
 
-  const systemPrompt = "You are a professional author writing high-quality book content. Write engaging, well-structured chapters that readers will love. Maintain consistent style and voice throughout.";
+  const systemPrompt = "You are a professional author writing high-quality book content. Write engaging, well-structured chapters that readers will love. Maintain consistent style and voice throughout. Use proper formatting with markdown for emphasis (bold, italics) but avoid unnecessary symbols. Focus on creating natural, flowing prose with proper paragraph breaks and professional structure.";
   
   return await callOpenRouter(API_CONFIGS.deepseekR1, prompt, systemPrompt);
 }

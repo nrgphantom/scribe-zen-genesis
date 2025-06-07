@@ -34,6 +34,90 @@ const BookIdeaGenerator = () => {
     }
   };
 
+  const extractBookDetails = (generatedText: string) => {
+    // Extract title - look for patterns like "Title:", "Book Title:", or first heading
+    let title = "";
+    let description = "";
+    
+    const lines = generatedText.split('\n');
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Look for title patterns
+      if (line.toLowerCase().includes('title:') && !title) {
+        title = line.split(':')[1]?.trim() || "";
+        title = title.replace(/[*#"`]/g, '').trim();
+      } else if (line.startsWith('#') && !title) {
+        title = line.replace(/^#+\s*/, '').replace(/[*"`]/g, '').trim();
+      }
+      
+      // Look for description/summary patterns
+      if ((line.toLowerCase().includes('description:') || 
+           line.toLowerCase().includes('summary:') || 
+           line.toLowerCase().includes('overview:')) && !description) {
+        // Get the content after the colon and possibly next few lines
+        let desc = line.split(':')[1]?.trim() || "";
+        for (let j = i + 1; j < Math.min(i + 3, lines.length); j++) {
+          const nextLine = lines[j].trim();
+          if (nextLine && !nextLine.toLowerCase().includes(':') && !nextLine.startsWith('#')) {
+            desc += " " + nextLine;
+          } else {
+            break;
+          }
+        }
+        description = desc.replace(/[*#"`]/g, '').trim();
+      }
+    }
+    
+    // If no specific title found, use the book name from input or extract from first meaningful line
+    if (!title && bookName) {
+      title = bookName;
+    } else if (!title) {
+      const firstMeaningfulLine = lines.find(line => 
+        line.trim() && 
+        !line.includes('generate') && 
+        !line.includes('idea') &&
+        line.length > 10
+      );
+      if (firstMeaningfulLine) {
+        title = firstMeaningfulLine.replace(/[*#"`]/g, '').trim().substring(0, 100);
+      }
+    }
+    
+    // If no description found, take first paragraph-like content
+    if (!description) {
+      const paragraphs = generatedText.split('\n\n');
+      const firstParagraph = paragraphs.find(p => 
+        p.trim().length > 50 && 
+        !p.toLowerCase().includes('title:') &&
+        !p.startsWith('#')
+      );
+      if (firstParagraph) {
+        description = firstParagraph.replace(/[*#"`]/g, '').trim().substring(0, 300);
+      }
+    }
+    
+    return {
+      title: title.substring(0, 100),
+      description: description.substring(0, 500)
+    };
+  };
+
+  const handleTurnIntoFullBook = () => {
+    if (generatedIdea) {
+      const { title, description } = extractBookDetails(generatedIdea);
+      navigate("/book-generator", {
+        state: {
+          title: title || "Untitled Book",
+          description: description || generatedIdea.substring(0, 300)
+        }
+      });
+    } else {
+      navigate("/book-generator");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black p-6">
       <div className="max-w-4xl mx-auto">
@@ -142,13 +226,13 @@ const BookIdeaGenerator = () => {
               ) : generatedIdea ? (
                 <div className="space-y-4">
                   <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
-                    <pre className="text-white whitespace-pre-wrap text-sm leading-relaxed font-sans">
+                    <div className="text-white whitespace-pre-wrap text-sm leading-relaxed font-sans prose prose-invert">
                       {generatedIdea}
-                    </pre>
+                    </div>
                   </div>
                   <Button 
-                    onClick={() => navigate("/book-generator")}
-                    className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold py-3 rounded-xl transition-all duration-300"
+                    onClick={handleTurnIntoFullBook}
+                    className="w-full glass-button text-white font-semibold py-3 rounded-xl"
                   >
                     Turn This Into a Full Book
                   </Button>

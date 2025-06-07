@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, BookOpen, FileText, Loader2, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,13 +19,19 @@ interface Chapter {
 
 const BookGenerator = () => {
   const navigate = useNavigate();
-  const [bookTitle, setBookTitle] = useState("");
-  const [bookDescription, setBookDescription] = useState("");
+  const location = useLocation();
+  
+  // Get pre-filled data from navigation state
+  const preFilledData = location.state as { title?: string; description?: string } | null;
+  
+  const [bookTitle, setBookTitle] = useState(preFilledData?.title || "");
+  const [bookDescription, setBookDescription] = useState(preFilledData?.description || "");
   const [numChapters, setNumChapters] = useState(5);
   const [wordsPerChapter, setWordsPerChapter] = useState(2000);
   const [isGeneratingOutline, setIsGeneratingOutline] = useState(false);
   const [bookOutline, setBookOutline] = useState<Chapter[]>([]);
   const [showOutline, setShowOutline] = useState(false);
+  const [generatedOutlineText, setGeneratedOutlineText] = useState("");
 
   const handleGenerateOutline = async () => {
     if (!bookTitle.trim() || !bookDescription.trim()) {
@@ -44,14 +49,52 @@ const BookGenerator = () => {
     try {
       console.log("Generating book outline:", { bookTitle, bookDescription, numChapters });
       const outline = await generateBookOutline(bookTitle, bookDescription, numChapters);
+      setGeneratedOutlineText(outline);
       
       // Parse the outline to extract chapters
       const chapters: Chapter[] = [];
-      for (let i = 1; i <= numChapters; i++) {
+      const lines = outline.split('\n');
+      let currentChapter = 1;
+      
+      for (let i = 0; i < lines.length && currentChapter <= numChapters; i++) {
+        const line = lines[i].trim();
+        if (line.toLowerCase().includes(`chapter ${currentChapter}`) || 
+            line.match(new RegExp(`^${currentChapter}[\\.\\)\\:]`, 'i'))) {
+          
+          // Extract chapter title
+          let chapterTitle = line.replace(/^(chapter\s*)?[\d\\.\\)\\:]+\s*/i, '').trim();
+          if (chapterTitle.startsWith('-') || chapterTitle.startsWith('*')) {
+            chapterTitle = chapterTitle.substring(1).trim();
+          }
+          
+          // Get chapter summary from next few lines
+          let summary = "";
+          for (let j = i + 1; j < lines.length && j < i + 5; j++) {
+            const summaryLine = lines[j].trim();
+            if (summaryLine && !summaryLine.toLowerCase().includes(`chapter ${currentChapter + 1}`)) {
+              summary += summaryLine + " ";
+            } else {
+              break;
+            }
+          }
+          
+          chapters.push({
+            number: currentChapter,
+            title: chapterTitle || `Chapter ${currentChapter}`,
+            summary: summary.trim() || `Content for Chapter ${currentChapter}`,
+          });
+          
+          currentChapter++;
+        }
+      }
+      
+      // If we couldn't parse enough chapters, fill in the remaining ones
+      while (chapters.length < numChapters) {
+        const chapterNum = chapters.length + 1;
         chapters.push({
-          number: i,
-          title: `Chapter ${i}`,
-          summary: `Chapter ${i} content summary`,
+          number: chapterNum,
+          title: `Chapter ${chapterNum}`,
+          summary: `Content for Chapter ${chapterNum}`,
         });
       }
       
@@ -103,26 +146,26 @@ const BookGenerator = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 p-6">
+    <div className="min-h-screen bg-black p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <Button 
             variant="ghost" 
             onClick={() => navigate("/")}
-            className="text-slate-300 hover:text-white mb-6 hover:bg-slate-800/50"
+            className="text-white hover:text-white mb-6 hover:bg-gray-800/50"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home
           </Button>
           
           <div className="flex items-center mb-4">
-            <FileText className="w-8 h-8 text-blue-400 mr-4" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
+            <FileText className="w-8 h-8 text-emerald-400 mr-4" />
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
               Book Generator
             </h1>
           </div>
-          <p className="text-xl text-slate-300">
+          <p className="text-xl text-white">
             Transform your idea into a complete manuscript with AI-generated chapters.
           </p>
         </div>
@@ -131,17 +174,17 @@ const BookGenerator = () => {
           /* Input Form */
           <Card className="glass-card rounded-2xl max-w-2xl mx-auto">
             <CardHeader>
-              <CardTitle className="text-2xl text-slate-100 flex items-center">
-                <BookOpen className="w-6 h-6 text-blue-400 mr-3" />
+              <CardTitle className="text-2xl text-white flex items-center">
+                <BookOpen className="w-6 h-6 text-emerald-400 mr-3" />
                 Book Details
               </CardTitle>
-              <CardDescription className="text-slate-400">
+              <CardDescription className="text-gray-400">
                 Provide your book details to generate a complete manuscript.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="title" className="text-slate-200 font-medium">
+                <Label htmlFor="title" className="text-white font-medium">
                   Book Title *
                 </Label>
                 <Input
@@ -149,12 +192,12 @@ const BookGenerator = () => {
                   placeholder="Enter your book title..."
                   value={bookTitle}
                   onChange={(e) => setBookTitle(e.target.value)}
-                  className="bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500/20"
+                  className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-emerald-500 focus:ring-emerald-500/20"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description" className="text-slate-200 font-medium">
+                <Label htmlFor="description" className="text-white font-medium">
                   Book Description *
                 </Label>
                 <Textarea
@@ -163,13 +206,13 @@ const BookGenerator = () => {
                   value={bookDescription}
                   onChange={(e) => setBookDescription(e.target.value)}
                   rows={4}
-                  className="bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500/20 resize-none"
+                  className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-emerald-500 focus:ring-emerald-500/20 resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="chapters" className="text-slate-200 font-medium">
+                  <Label htmlFor="chapters" className="text-white font-medium">
                     Number of Chapters (1-10)
                   </Label>
                   <Input
@@ -179,12 +222,12 @@ const BookGenerator = () => {
                     max="10"
                     value={numChapters}
                     onChange={(e) => setNumChapters(parseInt(e.target.value) || 1)}
-                    className="bg-slate-800/50 border-slate-700 text-slate-100 focus:border-blue-500 focus:ring-blue-500/20"
+                    className="bg-gray-800/50 border-gray-700 text-white focus:border-emerald-500 focus:ring-emerald-500/20"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="words" className="text-slate-200 font-medium">
+                  <Label htmlFor="words" className="text-white font-medium">
                     Words per Chapter
                   </Label>
                   <Input
@@ -194,7 +237,7 @@ const BookGenerator = () => {
                     max="10000"
                     value={wordsPerChapter}
                     onChange={(e) => setWordsPerChapter(parseInt(e.target.value) || 2000)}
-                    className="bg-slate-800/50 border-slate-700 text-slate-100 focus:border-blue-500 focus:ring-blue-500/20"
+                    className="bg-gray-800/50 border-gray-700 text-white focus:border-emerald-500 focus:ring-emerald-500/20"
                   />
                 </div>
               </div>
@@ -202,7 +245,7 @@ const BookGenerator = () => {
               <Button 
                 onClick={handleGenerateOutline}
                 disabled={isGeneratingOutline}
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold py-3 rounded-xl transition-all duration-300"
+                className="w-full glass-button text-white font-semibold py-3 rounded-xl"
               >
                 {isGeneratingOutline ? (
                   <>
@@ -224,11 +267,11 @@ const BookGenerator = () => {
             {/* Book Info Header */}
             <Card className="glass-card rounded-2xl">
               <CardHeader>
-                <CardTitle className="text-3xl text-slate-100">{bookTitle}</CardTitle>
-                <CardDescription className="text-slate-300 text-lg">
+                <CardTitle className="text-3xl text-white">{bookTitle}</CardTitle>
+                <CardDescription className="text-gray-300 text-lg">
                   {bookDescription}
                 </CardDescription>
-                <div className="flex gap-4 text-sm text-slate-400 mt-4">
+                <div className="flex gap-4 text-sm text-gray-400 mt-4">
                   <span>📚 {numChapters} Chapters</span>
                   <span>📝 ~{wordsPerChapter} words per chapter</span>
                   <span>📄 ~{numChapters * wordsPerChapter} total words</span>
@@ -236,22 +279,38 @@ const BookGenerator = () => {
               </CardHeader>
             </Card>
 
+            {/* Generated Outline */}
+            {generatedOutlineText && (
+              <Card className="glass-card rounded-xl">
+                <CardHeader>
+                  <CardTitle className="text-xl text-white">Generated Outline</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
+                    <div className="text-white whitespace-pre-wrap text-sm leading-relaxed font-sans max-h-96 overflow-y-auto prose prose-invert">
+                      {generatedOutlineText}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Chapters List */}
             <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-slate-100 mb-6">Chapters</h2>
+              <h2 className="text-2xl font-bold text-white mb-6">Chapters</h2>
               {bookOutline.map((chapter, index) => (
                 <Card key={chapter.number} className="glass-card rounded-xl">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                        <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center">
                           <span className="text-white font-bold">{chapter.number}</span>
                         </div>
                         <div>
-                          <h3 className="text-xl font-semibold text-slate-100">
+                          <h3 className="text-xl font-semibold text-white">
                             Chapter {chapter.number}
                           </h3>
-                          <p className="text-slate-400">
+                          <p className="text-gray-400">
                             {chapter.title}
                           </p>
                         </div>
@@ -282,10 +341,10 @@ const BookGenerator = () => {
                     </div>
                     
                     {chapter.content && (
-                      <div className="mt-4 bg-slate-800/50 rounded-xl p-6 border border-slate-700/50">
-                        <pre className="text-slate-200 whitespace-pre-wrap text-sm leading-relaxed font-sans max-h-96 overflow-y-auto">
+                      <div className="mt-4 bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
+                        <div className="text-white whitespace-pre-wrap text-sm leading-relaxed font-sans max-h-96 overflow-y-auto prose prose-invert">
                           {chapter.content}
-                        </pre>
+                        </div>
                       </div>
                     )}
                   </CardContent>
@@ -300,8 +359,9 @@ const BookGenerator = () => {
                 onClick={() => {
                   setShowOutline(false);
                   setBookOutline([]);
+                  setGeneratedOutlineText("");
                 }}
-                className="border-slate-600 text-slate-300 hover:bg-slate-800/50"
+                className="border-gray-600 text-gray-300 hover:bg-gray-800/50"
               >
                 Start New Book
               </Button>
