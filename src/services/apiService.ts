@@ -2,7 +2,7 @@
 const API_CONFIGS = {
   deepseek: {
     key: "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",
-    model: "deepseek/deepseek-reasoner"
+    model: "deepseek/deepseek-chat"
   },
   qwen: {
     key: "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",
@@ -19,6 +19,8 @@ const API_CONFIGS = {
 };
 
 async function callOpenRouter(apiConfig: any, prompt: string, systemPrompt?: string) {
+  console.log("Making API call to:", apiConfig.model);
+  
   const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -36,11 +38,16 @@ async function callOpenRouter(apiConfig: any, prompt: string, systemPrompt?: str
     }),
   });
 
+  console.log("API Response status:", response.status);
+  
   if (!response.ok) {
-    throw new Error(`API call failed: ${response.statusText}`);
+    const errorData = await response.text();
+    console.error("API Error:", errorData);
+    throw new Error(`API call failed: ${response.status} - ${errorData}`);
   }
 
   const data = await response.json();
+  console.log("API Response data:", data);
   return data.choices[0].message.content;
 }
 

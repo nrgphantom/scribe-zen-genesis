@@ -35,14 +35,14 @@ const BookIdeaGenerator = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 p-6">
+    <div className="min-h-screen bg-black p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <Button 
             variant="ghost" 
             onClick={() => navigate("/")}
-            className="text-slate-300 hover:text-white mb-6 hover:bg-slate-800/50"
+            className="text-white hover:text-white mb-6 hover:bg-gray-800/50"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home
@@ -54,7 +54,7 @@ const BookIdeaGenerator = () => {
               Book Idea Generator
             </h1>
           </div>
-          <p className="text-xl text-slate-300">
+          <p className="text-xl text-white">
             Let AI spark your creativity with unique book concepts and detailed outlines.
           </p>
         </div>
@@ -63,17 +63,17 @@ const BookIdeaGenerator = () => {
           {/* Input Form */}
           <Card className="glass-card rounded-2xl">
             <CardHeader>
-              <CardTitle className="text-2xl text-slate-100 flex items-center">
+              <CardTitle className="text-2xl text-white flex items-center">
                 <Sparkles className="w-6 h-6 text-emerald-400 mr-3" />
                 Create Your Idea
               </CardTitle>
-              <CardDescription className="text-slate-400">
+              <CardDescription className="text-gray-400">
                 Provide any details you have, or leave blank for completely random generation.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="bookName" className="text-slate-200 font-medium">
+                <Label htmlFor="bookName" className="text-white font-medium">
                   Book Name (Optional)
                 </Label>
                 <Input
@@ -81,12 +81,12 @@ const BookIdeaGenerator = () => {
                   placeholder="Enter a book title if you have one in mind..."
                   value={bookName}
                   onChange={(e) => setBookName(e.target.value)}
-                  className="bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20"
+                  className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-emerald-500 focus:ring-emerald-500/20"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description" className="text-slate-200 font-medium">
+                <Label htmlFor="description" className="text-white font-medium">
                   Description (Optional)
                 </Label>
                 <Textarea
@@ -95,7 +95,7 @@ const BookIdeaGenerator = () => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
-                  className="bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20 resize-none"
+                  className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-emerald-500 focus:ring-emerald-500/20 resize-none"
                 />
               </div>
 
@@ -117,8 +117,8 @@ const BookIdeaGenerator = () => {
                 )}
               </Button>
 
-              <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
-                <p className="text-sm text-slate-400 text-center">
+              <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
+                <p className="text-sm text-gray-400 text-center">
                   💡 <strong>Tip:</strong> Leave fields empty for completely random, creative ideas!
                 </p>
               </div>
@@ -128,8 +128,8 @@ const BookIdeaGenerator = () => {
           {/* Generated Idea Display */}
           <Card className="glass-card rounded-2xl">
             <CardHeader>
-              <CardTitle className="text-2xl text-slate-100">Generated Idea</CardTitle>
-              <CardDescription className="text-slate-400">
+              <CardTitle className="text-2xl text-white">Generated Idea</CardTitle>
+              <CardDescription className="text-gray-400">
                 Your AI-generated book concept will appear here.
               </CardDescription>
             </CardHeader>
@@ -137,12 +137,12 @@ const BookIdeaGenerator = () => {
               {isGenerating ? (
                 <div className="flex flex-col items-center justify-center py-12 space-y-4">
                   <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
-                  <p className="text-slate-400">Creating your unique book idea...</p>
+                  <p className="text-gray-400">Creating your unique book idea...</p>
                 </div>
               ) : generatedIdea ? (
                 <div className="space-y-4">
-                  <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700/50">
-                    <pre className="text-slate-200 whitespace-pre-wrap text-sm leading-relaxed font-sans">
+                  <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
+                    <pre className="text-white whitespace-pre-wrap text-sm leading-relaxed font-sans">
                       {generatedIdea}
                     </pre>
                   </div>
@@ -154,7 +154,7 @@ const BookIdeaGenerator = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+                <div className="flex flex-col items-center justify-center py-12 text-gray-500">
                   <BookOpen className="w-16 h-16 mb-4 opacity-50" />
                   <p className="text-center">
                     Your generated book idea will appear here after clicking "Generate Book Idea"
