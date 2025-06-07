@@ -1,16 +1,20 @@
 const API_CONFIGS = {
   deepseekR1: {
-    key: "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",
+    key: import.meta.env.VITE_OPENROUTER_DEEPSEEK_KEY,
     model: "deepseek/deepseek-r1-distill-qwen-32b"
   },
   qwen: {
-    key: "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",
+    key: import.meta.env.VITE_OPENROUTER_QWEN_KEY,
     model: "qwen/qwen-2.5-3b-instruct"
   }
 };
 
 async function callOpenRouter(apiConfig: any, prompt: string, systemPrompt?: string) {
   console.log("Making API call to:", apiConfig.model);
+  
+  if (!apiConfig.key) {
+    throw new Error("API key not found. Please check your environment variables.");
+  }
   
   try {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
