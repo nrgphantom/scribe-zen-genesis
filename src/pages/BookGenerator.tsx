@@ -38,8 +38,8 @@ const BookGenerator = () => {
       return;
     }
 
-    if (numChapters < 1 || numChapters > 10) {
-      toast.error("Number of chapters must be between 1 and 10.");
+    if (numChapters < 1 || numChapters > 50) {
+      toast.error("Number of chapters must be between 1 and 50.");
       return;
     }
 
@@ -207,13 +207,13 @@ const BookGenerator = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="chapters" className="text-white font-light">
-                    Number of Chapters (1-10)
+                    Number of Chapters (1-50)
                   </Label>
                   <Input
                     id="chapters"
                     type="number"
                     min="1"
-                    max="10"
+                    max="50"
                     value={numChapters}
                     onChange={(e) => setNumChapters(parseInt(e.target.value) || 1)}
                     className="minimal-input"
@@ -222,13 +222,13 @@ const BookGenerator = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="words" className="text-white font-light">
-                    Words per Chapter
+                    Words per Chapter (500-50,000)
                   </Label>
                   <Input
                     id="words"
                     type="number"
                     min="500"
-                    max="10000"
+                    max="50000"
                     value={wordsPerChapter}
                     onChange={(e) => setWordsPerChapter(parseInt(e.target.value) || 2000)}
                     className="minimal-input"
