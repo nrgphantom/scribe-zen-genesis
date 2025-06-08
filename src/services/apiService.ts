@@ -2,7 +2,7 @@
 async function callOpenRouter(prompt: string, systemPrompt?: string, apiKey?: string) {
   console.log("Making API call to: deepseek/deepseek-chat");
   
-  const key = apiKey || "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" || import.meta.env.VITE_OPENROUTER_DEEPSEEK_KEY;
+  const key = apiKey || "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";
   
   if (!key) {
     throw new Error("API key not found. Please provide an API key.");
@@ -91,7 +91,7 @@ export async function generateBookIdea(bookName?: string, description?: string, 
 
   const systemPrompt = "You are a bestselling author and publishing expert. Create detailed, engaging book concepts that would appeal to readers and publishers. Write in clear, professional prose using proper paragraph structure. Do not use asterisks, bullet points, or special formatting symbols. Focus on creating compelling, marketable book ideas with proper text formatting.";
   
-  return await callOpenRouter(prompt, systemPrompt, apiKey);
+  return await callOpenRouter(prompt, systemPrompt, "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");
 }
 
 export async function generateBookOutline(title: string, description: string, chapters: number, apiKey?: string) {
@@ -115,7 +115,7 @@ export async function generateBookOutline(title: string, description: string, ch
 
   const systemPrompt = "You are a professional book editor and author. Create well-structured, engaging book outlines that follow proper storytelling principles. Write in clear, professional prose. Do not use asterisks, bullet points, or special formatting symbols. Format chapters clearly with numbers and titles.";
   
-  return await callOpenRouter(prompt, systemPrompt, apiKey);
+  return await callOpenRouter(prompt, systemPrompt, "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");
 }
 
 export async function generateChapterContent(
@@ -150,5 +150,5 @@ export async function generateChapterContent(
 
   const systemPrompt = "You are a professional author writing high-quality book content. Write engaging, well-structured chapters with natural, flowing prose. Maintain consistent style and voice throughout. Use proper paragraph breaks and professional structure. Write content that feels like it belongs in a published book. Do not use asterisks, bullet points, or special formatting symbols. Use proper text formatting like bold and italics where appropriate.";
   
-  return await callOpenRouter(prompt, systemPrompt, apiKey);
+  return await callOpenRouter(prompt, systemPrompt, "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");
 }
