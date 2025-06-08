@@ -1,24 +1,23 @@
-
-async function callOpenRouter(prompt: string, systemPrompt?: string, apiKey?: string) {
-  console.log("Making API call to: deepseek/deepseek-chat");
+async function callMistralAPI(prompt: string, systemPrompt?: string) {
+  console.log("Making API call to Mistral via OpenRouter");
   
-  const key = apiKey || "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";
+  const apiKey = "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";
   
-  if (!key) {
-    throw new Error("API key not found. Please provide an API key.");
+  if (!apiKey) {
+    throw new Error("Mistral API key not found");
   }
   
   try {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${key}`,
+        "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
         "HTTP-Referer": window.location.origin,
         "X-Title": "ZedScribe"
       },
       body: JSON.stringify({
-        model: "deepseek/deepseek-chat",
+        model: "mistralai/mistral-7b-instruct",
         messages: [
           ...(systemPrompt ? [{ role: "system", content: systemPrompt }] : []),
           { role: "user", content: prompt }
@@ -47,24 +46,25 @@ async function callOpenRouter(prompt: string, systemPrompt?: string, apiKey?: st
     
     let content = data.choices[0].message.content;
     
-    // Enhanced text cleaning
-    content = content.replace(/\*+/g, ''); // Remove all asterisks
+    // Clean and format the text properly
+    content = content.replace(/\*+/g, ''); // Remove asterisks
     content = content.replace(/[●○■□▪▫]/g, ''); // Remove bullet symbols
     content = content.replace(/^\s*[-•]\s*/gm, ''); // Remove dash/bullet markers
     content = content.replace(/#{1,6}\s*/g, ''); // Remove markdown headers
     content = content.replace(/\n{3,}/g, '\n\n'); // Max 2 line breaks
     content = content.replace(/_{2,}/g, ''); // Remove multiple underscores
-    content = content.replace(/\*{2,}/g, ''); // Remove multiple asterisks (backup)
     content = content.trim();
     
     return content;
   } catch (error) {
-    console.error("API call error:", error);
+    console.error("Mistral API call error:", error);
     throw error;
   }
 }
 
-export async function generateBookIdea(bookName?: string, description?: string, apiKey?: string) {
+export async function generateBookIdea(bookName?: string, description?: string) {
+  console.log("Generating book idea with Mistral API");
+  
   const prompt = bookName || description 
     ? `Create a comprehensive book concept based on:
        ${bookName ? `Title: ${bookName}` : ''}
@@ -78,7 +78,7 @@ export async function generateBookIdea(bookName?: string, description?: string, 
        - Key plot points or concepts
        - What makes this book unique
        
-       Write in clear, professional prose without asterisks or special symbols. Use proper formatting with bold text where appropriate for headings and emphasis.`
+       Write in clear, professional prose without special formatting symbols. Use proper paragraph structure.`
     : `Create an original and compelling book concept including:
        - A unique and marketable title
        - Clear genre and target audience
@@ -87,14 +87,16 @@ export async function generateBookIdea(bookName?: string, description?: string, 
        - Key characters or concepts
        - What makes this book special
        
-       Write in clear, professional prose without asterisks or special symbols. Use proper formatting with bold text where appropriate for headings and emphasis.`;
+       Write in clear, professional prose without special formatting symbols. Use proper paragraph structure.`;
 
-  const systemPrompt = "You are a bestselling author and publishing expert. Create detailed, engaging book concepts that would appeal to readers and publishers. Write in clear, professional prose using proper paragraph structure. Do not use asterisks, bullet points, or special formatting symbols. Focus on creating compelling, marketable book ideas with proper text formatting.";
+  const systemPrompt = "You are a bestselling author and publishing expert. Create detailed, engaging book concepts that would appeal to readers and publishers. Write in clear, professional prose using proper paragraph structure. Do not use asterisks, bullet points, or special formatting symbols. Focus on creating compelling, marketable book ideas.";
   
-  return await callOpenRouter(prompt, systemPrompt, "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");
+  return await callMistralAPI(prompt, systemPrompt);
 }
 
-export async function generateBookOutline(title: string, description: string, chapters: number, apiKey?: string) {
+export async function generateBookOutline(title: string, description: string, chapters: number) {
+  console.log("Generating book outline with Mistral API");
+  
   const prompt = `Create a detailed book outline for:
     Title: ${title}
     Description: ${description}
@@ -111,11 +113,11 @@ export async function generateBookOutline(title: string, description: string, ch
     Chapter 1: [Title]
     [Summary content]
     
-    Write in clear, professional prose without asterisks or special symbols. Use proper formatting with bold text where appropriate.`;
+    Write in clear, professional prose without special formatting symbols.`;
 
   const systemPrompt = "You are a professional book editor and author. Create well-structured, engaging book outlines that follow proper storytelling principles. Write in clear, professional prose. Do not use asterisks, bullet points, or special formatting symbols. Format chapters clearly with numbers and titles.";
   
-  return await callOpenRouter(prompt, systemPrompt, "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");
+  return await callMistralAPI(prompt, systemPrompt);
 }
 
 export async function generateChapterContent(
@@ -124,9 +126,10 @@ export async function generateChapterContent(
   chapterNumber: number, 
   bookDescription: string, 
   targetWords: number,
-  previousChapters?: string[],
-  apiKey?: string
+  previousChapters?: string[]
 ) {
+  console.log("Generating chapter content with Mistral API");
+  
   const contextInfo = previousChapters && previousChapters.length > 0 
     ? `\n\nPrevious chapters context: ${previousChapters.join(". ")}`
     : "";
@@ -144,11 +147,10 @@ export async function generateChapterContent(
     - Maintains consistency with previous chapters
     - Uses professional, publishable writing style
     - Aims for approximately ${targetWords} words while prioritizing quality and story flow
-    - Uses proper text formatting with bold and italic text where appropriate
     
-    Write complete, well-developed content with natural story progression. Use clear, professional prose without asterisks or special symbols.`;
+    Write complete, well-developed content with natural story progression. Use clear, professional prose without special formatting symbols.`;
 
-  const systemPrompt = "You are a professional author writing high-quality book content. Write engaging, well-structured chapters with natural, flowing prose. Maintain consistent style and voice throughout. Use proper paragraph breaks and professional structure. Write content that feels like it belongs in a published book. Do not use asterisks, bullet points, or special formatting symbols. Use proper text formatting like bold and italics where appropriate.";
+  const systemPrompt = "You are a professional author writing high-quality book content. Write engaging, well-structured chapters with natural, flowing prose. Maintain consistent style and voice throughout. Use proper paragraph breaks and professional structure. Write content that feels like it belongs in a published book. Do not use asterisks, bullet points, or special formatting symbols.";
   
-  return await callOpenRouter(prompt, systemPrompt, "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");
+  return await callMistralAPI(prompt, systemPrompt);
 }
