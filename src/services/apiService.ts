@@ -2,7 +2,7 @@
 async function callOpenRouter(prompt: string, systemPrompt?: string, apiKey?: string) {
   console.log("Making API call to: deepseek/deepseek-chat");
   
-  const key = apiKey || import.meta.env.VITE_OPENROUTER_DEEPSEEK_KEY;
+  const key = apiKey || "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" || import.meta.env.VITE_OPENROUTER_DEEPSEEK_KEY;
   
   if (!key) {
     throw new Error("API key not found. Please provide an API key.");

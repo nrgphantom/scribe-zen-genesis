@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, BookOpen, Sparkles, Loader2, Key } from "lucide-react";
+import { ArrowLeft, BookOpen, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,32 +13,21 @@ const BookIdeaGenerator = () => {
   const navigate = useNavigate();
   const [bookName, setBookName] = useState("");
   const [description, setDescription] = useState("");
-  const [apiKey, setApiKey] = useState(localStorage.getItem('openrouter_api_key') || "");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedIdea, setGeneratedIdea] = useState("");
 
-  const handleApiKeyChange = (value: string) => {
-    setApiKey(value);
-    localStorage.setItem('openrouter_api_key', value);
-  };
-
   const handleGenerate = async () => {
-    if (!apiKey.trim()) {
-      toast.error("Please enter your OpenRouter API key first.");
-      return;
-    }
-
     setIsGenerating(true);
     setGeneratedIdea("");
     
     try {
       console.log("Generating book idea with:", { bookName, description });
-      const idea = await generateBookIdea(bookName.trim() || undefined, description.trim() || undefined, apiKey);
+      const idea = await generateBookIdea(bookName.trim() || undefined, description.trim() || undefined);
       setGeneratedIdea(idea);
       toast.success("Book idea generated successfully!");
     } catch (error) {
       console.error("Error generating book idea:", error);
-      toast.error("Failed to generate book idea. Please check your API key and try again.");
+      toast.error("Failed to generate book idea. Please try again.");
     } finally {
       setIsGenerating(false);
     }
@@ -162,24 +150,6 @@ const BookIdeaGenerator = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="apiKey" className="text-white font-light flex items-center">
-                  <Key className="w-4 h-4 mr-2" />
-                  OpenRouter API Key
-                </Label>
-                <Input
-                  id="apiKey"
-                  type="password"
-                  placeholder="Enter your OpenRouter API key..."
-                  value={apiKey}
-                  onChange={(e) => handleApiKeyChange(e.target.value)}
-                  className="minimal-input"
-                />
-                <p className="text-xs text-gray-500">
-                  Get your API key from <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" className="text-white underline">openrouter.ai/keys</a>
-                </p>
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="bookName" className="text-white font-light">
                   Book Name (Optional)
                 </Label>
@@ -208,7 +178,7 @@ const BookIdeaGenerator = () => {
 
               <Button 
                 onClick={handleGenerate}
-                disabled={isGenerating || !apiKey.trim()}
+                disabled={isGenerating}
                 className="w-full minimal-button py-3"
               >
                 {isGenerating ? (
