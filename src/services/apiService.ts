@@ -1,27 +1,24 @@
 
-const API_CONFIG = {
-  key: import.meta.env.VITE_OPENROUTER_DEEPSEEK_KEY,
-  model: "deepseek/deepseek-chat"
-};
-
-async function callOpenRouter(prompt: string, systemPrompt?: string) {
-  console.log("Making API call to:", API_CONFIG.model);
+async function callOpenRouter(prompt: string, systemPrompt?: string, apiKey?: string) {
+  console.log("Making API call to: deepseek/deepseek-chat");
   
-  if (!API_CONFIG.key) {
-    throw new Error("API key not found. Please check your VITE_OPENROUTER_DEEPSEEK_KEY environment variable.");
+  const key = apiKey || import.meta.env.VITE_OPENROUTER_DEEPSEEK_KEY;
+  
+  if (!key) {
+    throw new Error("API key not found. Please provide an API key.");
   }
   
   try {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${API_CONFIG.key}`,
+        "Authorization": `Bearer ${key}`,
         "Content-Type": "application/json",
         "HTTP-Referer": window.location.origin,
         "X-Title": "ZedScribe"
       },
       body: JSON.stringify({
-        model: API_CONFIG.model,
+        model: "deepseek/deepseek-chat",
         messages: [
           ...(systemPrompt ? [{ role: "system", content: systemPrompt }] : []),
           { role: "user", content: prompt }
@@ -50,12 +47,14 @@ async function callOpenRouter(prompt: string, systemPrompt?: string) {
     
     let content = data.choices[0].message.content;
     
-    // Clean up formatting
+    // Enhanced text cleaning
     content = content.replace(/\*+/g, ''); // Remove all asterisks
     content = content.replace(/[●○■□▪▫]/g, ''); // Remove bullet symbols
     content = content.replace(/^\s*[-•]\s*/gm, ''); // Remove dash/bullet markers
     content = content.replace(/#{1,6}\s*/g, ''); // Remove markdown headers
     content = content.replace(/\n{3,}/g, '\n\n'); // Max 2 line breaks
+    content = content.replace(/_{2,}/g, ''); // Remove multiple underscores
+    content = content.replace(/\*{2,}/g, ''); // Remove multiple asterisks (backup)
     content = content.trim();
     
     return content;
@@ -65,7 +64,7 @@ async function callOpenRouter(prompt: string, systemPrompt?: string) {
   }
 }
 
-export async function generateBookIdea(bookName?: string, description?: string) {
+export async function generateBookIdea(bookName?: string, description?: string, apiKey?: string) {
   const prompt = bookName || description 
     ? `Create a comprehensive book concept based on:
        ${bookName ? `Title: ${bookName}` : ''}
@@ -79,7 +78,7 @@ export async function generateBookIdea(bookName?: string, description?: string) 
        - Key plot points or concepts
        - What makes this book unique
        
-       Write in clear, professional prose without asterisks or special symbols.`
+       Write in clear, professional prose without asterisks or special symbols. Use proper formatting with bold text where appropriate for headings and emphasis.`
     : `Create an original and compelling book concept including:
        - A unique and marketable title
        - Clear genre and target audience
@@ -88,14 +87,14 @@ export async function generateBookIdea(bookName?: string, description?: string) 
        - Key characters or concepts
        - What makes this book special
        
-       Write in clear, professional prose without asterisks or special symbols.`;
+       Write in clear, professional prose without asterisks or special symbols. Use proper formatting with bold text where appropriate for headings and emphasis.`;
 
-  const systemPrompt = "You are a bestselling author and publishing expert. Create detailed, engaging book concepts that would appeal to readers and publishers. Write in clear, professional prose using proper paragraph structure. Do not use asterisks, bullet points, or special formatting symbols. Focus on creating compelling, marketable book ideas.";
+  const systemPrompt = "You are a bestselling author and publishing expert. Create detailed, engaging book concepts that would appeal to readers and publishers. Write in clear, professional prose using proper paragraph structure. Do not use asterisks, bullet points, or special formatting symbols. Focus on creating compelling, marketable book ideas with proper text formatting.";
   
-  return await callOpenRouter(prompt, systemPrompt);
+  return await callOpenRouter(prompt, systemPrompt, apiKey);
 }
 
-export async function generateBookOutline(title: string, description: string, chapters: number) {
+export async function generateBookOutline(title: string, description: string, chapters: number, apiKey?: string) {
   const prompt = `Create a detailed book outline for:
     Title: ${title}
     Description: ${description}
@@ -112,11 +111,11 @@ export async function generateBookOutline(title: string, description: string, ch
     Chapter 1: [Title]
     [Summary content]
     
-    Write in clear, professional prose without asterisks or special symbols.`;
+    Write in clear, professional prose without asterisks or special symbols. Use proper formatting with bold text where appropriate.`;
 
   const systemPrompt = "You are a professional book editor and author. Create well-structured, engaging book outlines that follow proper storytelling principles. Write in clear, professional prose. Do not use asterisks, bullet points, or special formatting symbols. Format chapters clearly with numbers and titles.";
   
-  return await callOpenRouter(prompt, systemPrompt);
+  return await callOpenRouter(prompt, systemPrompt, apiKey);
 }
 
 export async function generateChapterContent(
@@ -125,7 +124,8 @@ export async function generateChapterContent(
   chapterNumber: number, 
   bookDescription: string, 
   targetWords: number,
-  previousChapters?: string[]
+  previousChapters?: string[],
+  apiKey?: string
 ) {
   const contextInfo = previousChapters && previousChapters.length > 0 
     ? `\n\nPrevious chapters context: ${previousChapters.join(". ")}`
@@ -134,7 +134,7 @@ export async function generateChapterContent(
   const prompt = `Write Chapter ${chapterNumber}: "${chapterTitle}" for the book "${bookTitle}".
     
     Book Description: ${bookDescription}
-    Target Word Count: Around ${targetWords} words (flexible)
+    Target Word Count: Around ${targetWords} words (flexible, focus on quality and completeness)
     ${contextInfo}
     
     Write engaging, high-quality chapter content that:
@@ -143,11 +143,12 @@ export async function generateChapterContent(
     - Uses proper paragraph structure with good pacing
     - Maintains consistency with previous chapters
     - Uses professional, publishable writing style
-    - Aims for approximately ${targetWords} words while prioritizing quality over exact count
+    - Aims for approximately ${targetWords} words while prioritizing quality and story flow
+    - Uses proper text formatting with bold and italic text where appropriate
     
     Write complete, well-developed content with natural story progression. Use clear, professional prose without asterisks or special symbols.`;
 
-  const systemPrompt = "You are a professional author writing high-quality book content. Write engaging, well-structured chapters with natural, flowing prose. Maintain consistent style and voice throughout. Use proper paragraph breaks and professional structure. Write content that feels like it belongs in a published book. Do not use asterisks, bullet points, or special formatting symbols.";
+  const systemPrompt = "You are a professional author writing high-quality book content. Write engaging, well-structured chapters with natural, flowing prose. Maintain consistent style and voice throughout. Use proper paragraph breaks and professional structure. Write content that feels like it belongs in a published book. Do not use asterisks, bullet points, or special formatting symbols. Use proper text formatting like bold and italics where appropriate.";
   
-  return await callOpenRouter(prompt, systemPrompt);
+  return await callOpenRouter(prompt, systemPrompt, apiKey);
 }
