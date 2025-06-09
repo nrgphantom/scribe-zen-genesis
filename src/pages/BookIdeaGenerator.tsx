@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, BookOpen, Sparkles, Loader2 } from "lucide-react";
@@ -13,16 +14,22 @@ const BookIdeaGenerator = () => {
   const navigate = useNavigate();
   const [bookName, setBookName] = useState("");
   const [description, setDescription] = useState("");
+  const [numChapters, setNumChapters] = useState(5);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedIdea, setGeneratedIdea] = useState("");
 
   const handleGenerate = async () => {
+    if (numChapters < 1 || numChapters > 50) {
+      toast.error("Number of chapters must be between 1 and 50.");
+      return;
+    }
+
     setIsGenerating(true);
     setGeneratedIdea("");
     
     try {
-      console.log("Generating book idea with:", { bookName, description });
-      const idea = await generateBookIdea(bookName.trim() || undefined, description.trim() || undefined);
+      console.log("Generating book idea with:", { bookName, description, numChapters });
+      const idea = await generateBookIdea(bookName.trim() || undefined, description.trim() || undefined, numChapters);
       setGeneratedIdea(idea);
       toast.success("Book idea generated successfully!");
     } catch (error) {
@@ -102,12 +109,17 @@ const BookIdeaGenerator = () => {
       const { title, description } = extractBookDetails(generatedIdea);
       navigate("/book-generator", {
         state: {
-          title: title || "Untitled Book",
-          description: description || generatedIdea.substring(0, 300)
+          title: title || bookName || "Untitled Book",
+          description: description || generatedIdea.substring(0, 300),
+          numChapters: numChapters
         }
       });
     } else {
-      navigate("/book-generator");
+      navigate("/book-generator", {
+        state: {
+          numChapters: numChapters
+        }
+      });
     }
   };
 
@@ -173,6 +185,22 @@ const BookIdeaGenerator = () => {
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
                   className="minimal-input resize-none"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="chapters" className="text-white font-light">
+                  Number of Chapters (1-50) *
+                </Label>
+                <Input
+                  id="chapters"
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={numChapters}
+                  onChange={(e) => setNumChapters(parseInt(e.target.value) || 1)}
+                  className="minimal-input"
+                  required
                 />
               </div>
 

@@ -1,4 +1,3 @@
-
 async function callGeminiAPI(prompt: string, systemPrompt?: string) {
   console.log("Making API call to Google Gemini");
   
@@ -71,36 +70,37 @@ function cleanText(content: string): string {
   return content;
 }
 
-export async function generateBookIdea(bookName?: string, description?: string) {
+export async function generateBookIdea(bookName?: string, description?: string, numChapters?: number) {
   console.log("Generating book idea with Google Gemini API");
+  
+  const chapterInfo = numChapters ? `\nNumber of Chapters: ${numChapters}` : '';
   
   const prompt = bookName || description 
     ? `Create a comprehensive book concept based on the following information:
        ${bookName ? `Book Title: ${bookName}` : ''}
-       ${description ? `Book Description: ${description}` : ''}
+       ${description ? `Book Description: ${description}` : ''}${chapterInfo}
        
        Please provide a complete book idea that includes:
        
-       1. A compelling title (if not already provided)
-       2. Genre and target audience
-       3. Main premise and central themes
-       4. Detailed chapter outline with 8-12 chapters
-       5. Key plot points or main concepts
-       6. What makes this book unique and marketable
+       Title: [Compelling title if not already provided]
+       Genre: [Genre and target audience]
+       Description: [Main premise and central themes in 2-3 paragraphs]
+       ${numChapters ? `Chapter Outline: [Brief outline for ${numChapters} chapters]` : 'Chapter Outline: [Brief outline with 8-12 chapters]'}
+       Unique Elements: [What makes this book special and marketable]
        
-       Write this as a professional book proposal in clear, engaging prose. Use proper paragraph structure and avoid any special formatting symbols.`
+       Write this as a clear, engaging book concept. Use proper paragraph structure and avoid any special formatting symbols.`
     : `Create an original and compelling book concept that includes:
+       ${chapterInfo}
        
-       1. A unique and marketable title
-       2. Clear genre and target audience identification
-       3. Engaging premise and main themes
-       4. Detailed chapter outline with 8-12 chapters
-       5. Key characters or main concepts
-       6. What makes this book special and different
+       Title: [Unique and marketable title]
+       Genre: [Clear genre and target audience identification]
+       Description: [Engaging premise and main themes in 2-3 paragraphs]
+       ${numChapters ? `Chapter Outline: [Brief outline for ${numChapters} chapters]` : 'Chapter Outline: [Brief outline with 8-12 chapters]'}
+       Unique Elements: [What makes this book special and different]
        
-       Write this as a professional book proposal in clear, engaging prose. Use proper paragraph structure and avoid any special formatting symbols.`;
+       Write this as a clear, engaging book concept. Use proper paragraph structure and avoid any special formatting symbols.`;
 
-  const systemPrompt = "You are an experienced bestselling author and publishing expert. Your task is to create detailed, engaging book concepts that would appeal to both readers and publishers. Write in clear, professional prose using proper paragraph structure. Focus on creating compelling, marketable book ideas that could realistically be published. Do not use asterisks, bullet points, or any special formatting symbols in your response.";
+  const systemPrompt = "You are an experienced bestselling author and publishing expert. Create detailed, engaging book concepts that would appeal to both readers and publishers. Write in clear, professional prose using proper paragraph structure. Focus on creating compelling, marketable book ideas. Do not use asterisks, bullet points, or any special formatting symbols in your response.";
   
   return await callGeminiAPI(prompt, systemPrompt);
 }

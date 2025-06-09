@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, BookOpen, FileText, Loader2, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,16 +22,23 @@ const BookGenerator = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  const preFilledData = location.state as { title?: string; description?: string } | null;
+  const preFilledData = location.state as { title?: string; description?: string; numChapters?: number } | null;
   
-  const [bookTitle, setBookTitle] = useState(preFilledData?.title || "");
-  const [bookDescription, setBookDescription] = useState(preFilledData?.description || "");
+  const [bookTitle, setBookTitle] = useState("");
+  const [bookDescription, setBookDescription] = useState("");
   const [numChapters, setNumChapters] = useState(5);
   const [wordsPerChapter, setWordsPerChapter] = useState(2000);
   const [isGeneratingOutline, setIsGeneratingOutline] = useState(false);
   const [bookOutline, setBookOutline] = useState<Chapter[]>([]);
   const [showOutline, setShowOutline] = useState(false);
-  const [generatedOutlineText, setGeneratedOutlineText] = useState("");
+
+  useEffect(() => {
+    if (preFilledData) {
+      if (preFilledData.title) setBookTitle(preFilledData.title);
+      if (preFilledData.description) setBookDescription(preFilledData.description);
+      if (preFilledData.numChapters) setNumChapters(preFilledData.numChapters);
+    }
+  }, [preFilledData]);
 
   const handleGenerateOutline = async () => {
     if (!bookTitle.trim() || !bookDescription.trim()) {
@@ -48,7 +56,6 @@ const BookGenerator = () => {
     try {
       console.log("Generating book outline:", { bookTitle, bookDescription, numChapters });
       const outline = await generateBookOutline(bookTitle, bookDescription, numChapters);
-      setGeneratedOutlineText(outline);
       
       const chapters: Chapter[] = [];
       const lines = outline.split('\n');
@@ -272,22 +279,6 @@ const BookGenerator = () => {
               </CardHeader>
             </Card>
 
-            {/* Generated Outline */}
-            {generatedOutlineText && (
-              <Card className="minimal-card">
-                <CardHeader>
-                  <CardTitle className="text-xl text-white font-light">Generated Outline</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="bg-gray-900/50 rounded-lg p-6 border border-gray-800/50">
-                    <div className="text-content whitespace-pre-wrap text-sm max-h-96 overflow-y-auto">
-                      {generatedOutlineText}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             {/* Chapters List */}
             <div className="space-y-4">
               <h2 className="text-2xl font-light text-white mb-6">Chapters</h2>
@@ -301,10 +292,10 @@ const BookGenerator = () => {
                         </div>
                         <div>
                           <h3 className="text-xl font-light text-white">
-                            Chapter {chapter.number}
+                            Chapter {chapter.number}: {chapter.title}
                           </h3>
-                          <p className="text-gray-400 font-light">
-                            {chapter.title}
+                          <p className="text-gray-400 font-light text-sm mt-1">
+                            {chapter.summary}
                           </p>
                         </div>
                       </div>
@@ -352,7 +343,6 @@ const BookGenerator = () => {
                 onClick={() => {
                   setShowOutline(false);
                   setBookOutline([]);
-                  setGeneratedOutlineText("");
                 }}
                 className="border-gray-600 text-gray-300 hover:bg-gray-900/50"
               >
