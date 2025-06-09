@@ -1,130 +1,58 @@
-async function callMistralAPI(prompt: string, systemPrompt?: string) {
-  console.log("Making API call to Mistral via OpenRouter");
+
+async function callGeminiAPI(prompt: string, systemPrompt?: string) {
+  console.log("Making API call to Google Gemini");
   
-  const apiKey = "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";
+  const apiKey = "AIzaSyCxuHt7VN50Z9dJky2HZjV9Z03pUmiKb3Q";
   
   if (!apiKey) {
-    throw new Error("Mistral API key not found");
+    throw new Error("Google API key not found");
   }
   
   try {
     console.log("Sending request with prompt:", prompt.substring(0, 100) + "...");
     
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    // Combine system prompt and user prompt for Gemini
+    const fullPrompt = systemPrompt ? `${systemPrompt}\n\nUser request: ${prompt}` : prompt;
+    
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": window.location.origin,
-        "X-Title": "ZedScribe"
       },
       body: JSON.stringify({
-        model: "mistralai/mistral-large",
-        messages: [
-          ...(systemPrompt ? [{ role: "system", content: systemPrompt }] : []),
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.8,
-        max_tokens: 8000,
-        stream: false
+        contents: [{
+          parts: [{
+            text: fullPrompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.8,
+          maxOutputTokens: 8000,
+        }
       }),
     });
 
     console.log("API Response status:", response.status);
-    console.log("API Response headers:", Object.fromEntries(response.headers.entries()));
     
     if (!response.ok) {
       const errorText = await response.text();
       console.error("API Error Response:", errorText);
-      
-      // Try alternative model if the first one fails
-      console.log("Trying alternative model: mistralai/mistral-medium");
-      
-      const fallbackResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": window.location.origin,
-          "X-Title": "ZedScribe"
-        },
-        body: JSON.stringify({
-          model: "mistralai/mistral-medium",
-          messages: [
-            ...(systemPrompt ? [{ role: "system", content: systemPrompt }] : []),
-            { role: "user", content: prompt }
-          ],
-          temperature: 0.8,
-          max_tokens: 6000,
-          stream: false
-        }),
-      });
-      
-      if (!fallbackResponse.ok) {
-        const fallbackErrorText = await fallbackResponse.text();
-        console.error("Fallback API Error:", fallbackErrorText);
-        throw new Error(`Both API calls failed. Primary: ${response.status} - ${errorText}. Fallback: ${fallbackResponse.status} - ${fallbackErrorText}`);
-      }
-      
-      const fallbackData = await fallbackResponse.json();
-      console.log("Fallback API Response received:", fallbackData);
-      
-      if (!fallbackData.choices || !fallbackData.choices[0] || !fallbackData.choices[0].message) {
-        console.error("Invalid fallback response structure:", fallbackData);
-        throw new Error("Invalid fallback API response structure");
-      }
-      
-      let content = fallbackData.choices[0].message.content;
-      return cleanText(content);
+      throw new Error(`API call failed: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
     console.log("API Response received:", data);
     
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0]) {
       console.error("Invalid response structure:", data);
       throw new Error("Invalid API response structure");
     }
     
-    let content = data.choices[0].message.content;
+    let content = data.candidates[0].content.parts[0].text;
     return cleanText(content);
     
   } catch (error) {
-    console.error("Mistral API call error:", error);
-    
-    // Final fallback to a simple, reliable model
-    try {
-      console.log("Attempting final fallback with basic model");
-      
-      const finalResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": window.location.origin,
-          "X-Title": "ZedScribe"
-        },
-        body: JSON.stringify({
-          model: "mistralai/mistral-7b-instruct",
-          messages: [
-            { role: "user", content: prompt }
-          ],
-          temperature: 0.7,
-          max_tokens: 4000,
-          stream: false
-        }),
-      });
-      
-      if (finalResponse.ok) {
-        const finalData = await finalResponse.json();
-        if (finalData.choices && finalData.choices[0] && finalData.choices[0].message) {
-          return cleanText(finalData.choices[0].message.content);
-        }
-      }
-    } catch (finalError) {
-      console.error("Final fallback failed:", finalError);
-    }
-    
+    console.error("Gemini API call error:", error);
     throw error;
   }
 }
@@ -144,7 +72,7 @@ function cleanText(content: string): string {
 }
 
 export async function generateBookIdea(bookName?: string, description?: string) {
-  console.log("Generating book idea with Mistral API");
+  console.log("Generating book idea with Google Gemini API");
   
   const prompt = bookName || description 
     ? `Create a comprehensive book concept based on the following information:
@@ -174,11 +102,11 @@ export async function generateBookIdea(bookName?: string, description?: string) 
 
   const systemPrompt = "You are an experienced bestselling author and publishing expert. Your task is to create detailed, engaging book concepts that would appeal to both readers and publishers. Write in clear, professional prose using proper paragraph structure. Focus on creating compelling, marketable book ideas that could realistically be published. Do not use asterisks, bullet points, or any special formatting symbols in your response.";
   
-  return await callMistralAPI(prompt, systemPrompt);
+  return await callGeminiAPI(prompt, systemPrompt);
 }
 
 export async function generateBookOutline(title: string, description: string, chapters: number) {
-  console.log("Generating book outline with Mistral API");
+  console.log("Generating book outline with Google Gemini API");
   
   const prompt = `Create a detailed book outline for the following book:
     
@@ -202,7 +130,7 @@ export async function generateBookOutline(title: string, description: string, ch
 
   const systemPrompt = "You are a professional book editor and author with extensive experience in creating book outlines. Your task is to create well-structured, engaging book outlines that follow proper storytelling principles and logical progression. Write in clear, professional prose without using asterisks, bullet points, or any special formatting symbols. Format chapters clearly with numbers and descriptive titles.";
   
-  return await callMistralAPI(prompt, systemPrompt);
+  return await callGeminiAPI(prompt, systemPrompt);
 }
 
 export async function generateChapterContent(
@@ -213,7 +141,7 @@ export async function generateChapterContent(
   targetWords: number,
   previousChapters?: string[]
 ) {
-  console.log("Generating chapter content with Mistral API");
+  console.log("Generating chapter content with Google Gemini API");
   
   const contextInfo = previousChapters && previousChapters.length > 0 
     ? `\n\nContext from previous chapters: ${previousChapters.join(". ")}`
@@ -238,5 +166,5 @@ export async function generateChapterContent(
 
   const systemPrompt = "You are a professional author writing high-quality book content. Your task is to write engaging, well-structured chapters with natural, flowing prose. Maintain a consistent style and voice throughout. Use proper paragraph breaks and professional structure. Write content that feels like it belongs in a published book. Do not use asterisks, bullet points, or any special formatting symbols in your writing.";
   
-  return await callMistralAPI(prompt, systemPrompt);
+  return await callGeminiAPI(prompt, systemPrompt);
 }
