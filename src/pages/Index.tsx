@@ -12,7 +12,11 @@ const Index = () => {
         {/* Header */}
         <div className="text-center mb-16 pt-12">
           <div className="flex items-center justify-center mb-6">
-            <BookOpen className="w-12 h-12 text-white mr-4" />
+            <img 
+              src="/pen.png" 
+              alt="ZedScribe Logo" 
+              className="w-12 h-12 mr-4"
+            />
             <h1 className="text-6xl font-light text-white tracking-tight">
               ZedScribe
             </h1>

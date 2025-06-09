@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, BookOpen, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2, Copy, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { generateBookIdea } from "@/services/apiService";
 import { toast } from "sonner";
+import jsPDF from 'jspdf';
 
 const BookIdeaGenerator = () => {
   const navigate = useNavigate();
@@ -37,6 +37,51 @@ const BookIdeaGenerator = () => {
       toast.error("Failed to generate book idea. Please try again.");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleCopyText = async () => {
+    if (!generatedIdea) return;
+    
+    try {
+      await navigator.clipboard.writeText(generatedIdea);
+      toast.success("Text copied to clipboard!");
+    } catch (error) {
+      console.error("Failed to copy text:", error);
+      toast.error("Failed to copy text to clipboard.");
+    }
+  };
+
+  const handleDownloadPDF = () => {
+    if (!generatedIdea) return;
+
+    try {
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const margin = 20;
+      const maxWidth = pageWidth - 2 * margin;
+      
+      // Add title
+      pdf.setFontSize(20);
+      pdf.text("Book Idea - ZedScribe", margin, 30);
+      
+      // Add generated date
+      pdf.setFontSize(10);
+      pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, margin, 45);
+      
+      // Add content
+      pdf.setFontSize(12);
+      const lines = pdf.splitTextToSize(generatedIdea, maxWidth);
+      pdf.text(lines, margin, 60);
+      
+      // Save the PDF
+      const fileName = bookName ? `${bookName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_idea.pdf` : 'book_idea.pdf';
+      pdf.save(fileName);
+      
+      toast.success("PDF downloaded successfully!");
+    } catch (error) {
+      console.error("Failed to generate PDF:", error);
+      toast.error("Failed to generate PDF.");
     }
   };
 
@@ -138,7 +183,11 @@ const BookIdeaGenerator = () => {
           </Button>
           
           <div className="flex items-center mb-4">
-            <BookOpen className="w-8 h-8 text-white mr-4" />
+            <img 
+              src="/pen.png" 
+              alt="ZedScribe Logo" 
+              className="w-8 h-8 mr-4"
+            />
             <h1 className="text-4xl font-light text-white tracking-tight">
               Book Idea Generator
             </h1>
@@ -251,16 +300,42 @@ const BookIdeaGenerator = () => {
                       {generatedIdea}
                     </div>
                   </div>
-                  <Button 
-                    onClick={handleTurnIntoFullBook}
-                    className="w-full minimal-button py-3"
-                  >
-                    Turn This Into a Full Book
-                  </Button>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex flex-col gap-3">
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={handleCopyText}
+                        variant="outline"
+                        className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-900/50"
+                      >
+                        <Copy className="w-4 h-4 mr-2" />
+                        Copy Text
+                      </Button>
+                      <Button 
+                        onClick={handleDownloadPDF}
+                        variant="outline"
+                        className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-900/50"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download PDF
+                      </Button>
+                    </div>
+                    <Button 
+                      onClick={handleTurnIntoFullBook}
+                      className="w-full minimal-button py-3"
+                    >
+                      Turn This Into a Full Book
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                  <BookOpen className="w-16 h-16 mb-4 opacity-50" />
+                  <img 
+                    src="/pen.png" 
+                    alt="ZedScribe Logo" 
+                    className="w-16 h-16 mb-4 opacity-50"
+                  />
                   <p className="text-center font-light">
                     Your generated book idea will appear here after clicking "Generate Book Idea"
                   </p>

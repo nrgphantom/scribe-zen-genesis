@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, BookOpen, FileText, Loader2, Edit3 } from "lucide-react";
+import { ArrowLeft, FileText, Loader2, Edit3, Copy, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { generateBookOutline, generateChapterContent } from "@/services/apiService";
 import { toast } from "sonner";
+import jsPDF from 'jspdf';
 
 interface Chapter {
   number: number;
@@ -152,6 +153,124 @@ const BookGenerator = () => {
     }
   };
 
+  const handleCopyChapter = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      toast.success("Chapter content copied to clipboard!");
+    } catch (error) {
+      console.error("Failed to copy text:", error);
+      toast.error("Failed to copy text to clipboard.");
+    }
+  };
+
+  const handleDownloadChapterPDF = (chapter: Chapter) => {
+    if (!chapter.content) return;
+
+    try {
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const margin = 20;
+      const maxWidth = pageWidth - 2 * margin;
+      
+      // Add title
+      pdf.setFontSize(20);
+      pdf.text(`${bookTitle}`, margin, 30);
+      
+      // Add chapter title
+      pdf.setFontSize(16);
+      pdf.text(`Chapter ${chapter.number}: ${chapter.title}`, margin, 50);
+      
+      // Add generated date
+      pdf.setFontSize(10);
+      pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, margin, 65);
+      
+      // Add content
+      pdf.setFontSize(12);
+      const lines = pdf.splitTextToSize(chapter.content, maxWidth);
+      pdf.text(lines, margin, 80);
+      
+      // Save the PDF
+      const fileName = `${bookTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_chapter_${chapter.number}.pdf`;
+      pdf.save(fileName);
+      
+      toast.success("Chapter PDF downloaded successfully!");
+    } catch (error) {
+      console.error("Failed to generate PDF:", error);
+      toast.error("Failed to generate PDF.");
+    }
+  };
+
+  const handleDownloadFullBookPDF = () => {
+    const chaptersWithContent = bookOutline.filter(ch => ch.content);
+    if (chaptersWithContent.length === 0) {
+      toast.error("No chapters with content to download.");
+      return;
+    }
+
+    try {
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
+      const maxWidth = pageWidth - 2 * margin;
+      let yPosition = 30;
+      
+      // Add book title
+      pdf.setFontSize(24);
+      pdf.text(bookTitle, margin, yPosition);
+      yPosition += 20;
+      
+      // Add book description
+      pdf.setFontSize(12);
+      const descLines = pdf.splitTextToSize(bookDescription, maxWidth);
+      pdf.text(descLines, margin, yPosition);
+      yPosition += descLines.length * 6 + 20;
+      
+      // Add generated date
+      pdf.setFontSize(10);
+      pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, margin, yPosition);
+      yPosition += 30;
+      
+      // Add chapters
+      chaptersWithContent.forEach((chapter, index) => {
+        // Check if we need a new page
+        if (yPosition > pageHeight - 50) {
+          pdf.addPage();
+          yPosition = 30;
+        }
+        
+        // Add chapter title
+        pdf.setFontSize(16);
+        pdf.text(`Chapter ${chapter.number}: ${chapter.title}`, margin, yPosition);
+        yPosition += 15;
+        
+        // Add chapter content
+        pdf.setFontSize(12);
+        const contentLines = pdf.splitTextToSize(chapter.content!, maxWidth);
+        
+        contentLines.forEach((line: string) => {
+          if (yPosition > pageHeight - 20) {
+            pdf.addPage();
+            yPosition = 30;
+          }
+          pdf.text(line, margin, yPosition);
+          yPosition += 6;
+        });
+        
+        yPosition += 20; // Space between chapters
+      });
+      
+      // Save the PDF
+      const fileName = `${bookTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_full_book.pdf`;
+      pdf.save(fileName);
+      
+      toast.success("Full book PDF downloaded successfully!");
+    } catch (error) {
+      console.error("Failed to generate PDF:", error);
+      toast.error("Failed to generate PDF.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black p-6">
       <div className="max-w-6xl mx-auto">
@@ -167,7 +286,11 @@ const BookGenerator = () => {
           </Button>
           
           <div className="flex items-center mb-4">
-            <FileText className="w-8 h-8 text-white mr-4" />
+            <img 
+              src="/pen.png" 
+              alt="ZedScribe Logo" 
+              className="w-8 h-8 mr-4"
+            />
             <h1 className="text-4xl font-light text-white tracking-tight">
               Book Generator
             </h1>
@@ -181,7 +304,7 @@ const BookGenerator = () => {
           <Card className="minimal-card max-w-2xl mx-auto">
             <CardHeader>
               <CardTitle className="text-2xl text-white font-light flex items-center">
-                <BookOpen className="w-6 h-6 text-white mr-3" />
+                <FileText className="w-6 h-6 text-white mr-3" />
                 Book Details
               </CardTitle>
               <CardDescription className="text-gray-400 font-light">
@@ -272,14 +395,27 @@ const BookGenerator = () => {
             {/* Book Info Header */}
             <Card className="minimal-card">
               <CardHeader>
-                <CardTitle className="text-3xl text-white font-light">{bookTitle}</CardTitle>
-                <CardDescription className="text-gray-300 text-lg font-light">
-                  {bookDescription}
-                </CardDescription>
-                <div className="flex gap-4 text-sm text-gray-400 mt-4 font-light">
-                  <span>📚 {numChapters} Chapters</span>
-                  <span>📝 ~{wordsPerChapter} words per chapter</span>
-                  <span>📄 ~{numChapters * wordsPerChapter} total words</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="text-3xl text-white font-light">{bookTitle}</CardTitle>
+                    <CardDescription className="text-gray-300 text-lg font-light mt-2">
+                      {bookDescription}
+                    </CardDescription>
+                    <div className="flex gap-4 text-sm text-gray-400 mt-4 font-light">
+                      <span>📚 {numChapters} Chapters</span>
+                      <span>📝 ~{wordsPerChapter} words per chapter</span>
+                      <span>📄 ~{numChapters * wordsPerChapter} total words</span>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={handleDownloadFullBookPDF}
+                    variant="outline"
+                    className="border-gray-600 text-gray-300 hover:bg-gray-900/50"
+                    disabled={bookOutline.filter(ch => ch.content).length === 0}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Full Book
+                  </Button>
                 </div>
               </CardHeader>
             </Card>
@@ -305,29 +441,51 @@ const BookGenerator = () => {
                           </p>
                         </div>
                       </div>
-                      <Button
-                        onClick={() => handleGenerateChapter(index)}
-                        disabled={chapter.isGenerating}
-                        className="minimal-button flex-shrink-0"
-                        size="sm"
-                      >
-                        {chapter.isGenerating ? (
+                      <div className="flex gap-2">
+                        {chapter.content && (
                           <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Writing...
-                          </>
-                        ) : chapter.content ? (
-                          <>
-                            <Edit3 className="w-4 h-4 mr-2" />
-                            Regenerate
-                          </>
-                        ) : (
-                          <>
-                            <Edit3 className="w-4 h-4 mr-2" />
-                            Write Chapter
+                            <Button
+                              onClick={() => handleCopyChapter(chapter.content!)}
+                              variant="outline"
+                              size="sm"
+                              className="border-gray-600 text-gray-300 hover:bg-gray-900/50"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              onClick={() => handleDownloadChapterPDF(chapter)}
+                              variant="outline"
+                              size="sm"
+                              className="border-gray-600 text-gray-300 hover:bg-gray-900/50"
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
                           </>
                         )}
-                      </Button>
+                        <Button
+                          onClick={() => handleGenerateChapter(index)}
+                          disabled={chapter.isGenerating}
+                          className="minimal-button flex-shrink-0"
+                          size="sm"
+                        >
+                          {chapter.isGenerating ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Writing...
+                            </>
+                          ) : chapter.content ? (
+                            <>
+                              <Edit3 className="w-4 h-4 mr-2" />
+                              Regenerate
+                            </>
+                          ) : (
+                            <>
+                              <Edit3 className="w-4 h-4 mr-2" />
+                              Write Chapter
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                     
                     {/* Chapter Content */}
