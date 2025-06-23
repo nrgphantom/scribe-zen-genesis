@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, FileText, Loader2, Edit3, Copy, Download } from "lucide-react";
+import { ArrowLeft, FileText, Loader2, Edit3, Copy, Download, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ const BookGenerator = () => {
   const [numChapters, setNumChapters] = useState(5);
   const [wordsPerChapter, setWordsPerChapter] = useState(2000);
   const [isGeneratingOutline, setIsGeneratingOutline] = useState(false);
+  const [isGeneratingAllChapters, setIsGeneratingAllChapters] = useState(false);
   const [bookOutline, setBookOutline] = useState<Chapter[]>([]);
   const [showOutline, setShowOutline] = useState(false);
 
@@ -153,6 +154,92 @@ const BookGenerator = () => {
     }
   };
 
+  const handleGenerateAllChapters = async () => {
+    if (bookOutline.length === 0) {
+      toast.error("Please generate a book outline first.");
+      return;
+    }
+
+    setIsGeneratingAllChapters(true);
+    
+    try {
+      // Mark all chapters as generating
+      const updatedOutline = bookOutline.map(chapter => ({
+        ...chapter,
+        isGenerating: true
+      }));
+      setBookOutline(updatedOutline);
+
+      // Generate chapters sequentially to maintain context
+      for (let i = 0; i < bookOutline.length; i++) {
+        const chapter = bookOutline[i];
+        
+        try {
+          const previousChapters = bookOutline
+            .slice(0, i)
+            .filter(ch => ch.content)
+            .map(ch => ch.summary);
+
+          const content = await generateChapterContent(
+            bookTitle,
+            chapter.title,
+            chapter.number,
+            bookDescription,
+            wordsPerChapter,
+            previousChapters
+          );
+
+          // Update this specific chapter
+          setBookOutline(prevOutline => {
+            const newOutline = [...prevOutline];
+            newOutline[i] = {
+              ...chapter,
+              content: content,
+              isGenerating: false
+            };
+            return newOutline;
+          });
+
+          toast.success(`Chapter ${chapter.number} completed!`);
+          
+          // Small delay between chapters to prevent rate limiting
+          if (i < bookOutline.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        } catch (error) {
+          console.error(`Error generating chapter ${chapter.number}:`, error);
+          
+          // Mark this chapter as failed
+          setBookOutline(prevOutline => {
+            const newOutline = [...prevOutline];
+            newOutline[i] = {
+              ...chapter,
+              isGenerating: false
+            };
+            return newOutline;
+          });
+          
+          toast.error(`Failed to generate Chapter ${chapter.number}`);
+        }
+      }
+
+      toast.success("All chapters generation completed!");
+    } catch (error) {
+      console.error("Error in batch generation:", error);
+      toast.error("Failed to generate all chapters. Please try individual chapters.");
+    } finally {
+      setIsGeneratingAllChapters(false);
+      
+      // Ensure no chapters are left in generating state
+      setBookOutline(prevOutline => 
+        prevOutline.map(chapter => ({
+          ...chapter,
+          isGenerating: false
+        }))
+      );
+    }
+  };
+
   const handleCopyChapter = async (content: string) => {
     try {
       await navigator.clipboard.writeText(content);
@@ -270,6 +357,21 @@ const BookGenerator = () => {
       toast.error("Failed to generate PDF.");
     }
   };
+
+  const getGenerationProgress = () => {
+    const totalChapters = bookOutline.length;
+    const completedChapters = bookOutline.filter(ch => ch.content).length;
+    const generatingChapters = bookOutline.filter(ch => ch.isGenerating).length;
+    
+    return {
+      total: totalChapters,
+      completed: completedChapters,
+      generating: generatingChapters,
+      percentage: totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0
+    };
+  };
+
+  const progress = getGenerationProgress();
 
   return (
     <div className="min-h-screen bg-black p-6">
@@ -405,20 +507,63 @@ const BookGenerator = () => {
                       <span>📚 {numChapters} Chapters</span>
                       <span>📝 ~{wordsPerChapter} words per chapter</span>
                       <span>📄 ~{numChapters * wordsPerChapter} total words</span>
+                      {progress.total > 0 && (
+                        <span>✅ {progress.completed}/{progress.total} completed ({progress.percentage}%)</span>
+                      )}
                     </div>
                   </div>
-                  <Button 
-                    onClick={handleDownloadFullBookPDF}
-                    variant="outline"
-                    className="border-gray-600 text-gray-300 hover:bg-gray-900/50"
-                    disabled={bookOutline.filter(ch => ch.content).length === 0}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download Full Book
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button 
+                      onClick={handleGenerateAllChapters}
+                      disabled={isGeneratingAllChapters || progress.generating > 0}
+                      className="minimal-button"
+                    >
+                      {isGeneratingAllChapters ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Writing All...
+                        </>
+                      ) : (
+                        <>
+                          <BookOpen className="w-4 h-4 mr-2" />
+                          Write All Chapters
+                        </>
+                      )}
+                    </Button>
+                    <Button 
+                      onClick={handleDownloadFullBookPDF}
+                      variant="outline"
+                      className="border-gray-600 text-gray-300 hover:bg-gray-900/50"
+                      disabled={bookOutline.filter(ch => ch.content).length === 0}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download Full Book
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
             </Card>
+
+            {/* Progress Indicator */}
+            {isGeneratingAllChapters && (
+              <Card className="minimal-card">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-white font-light">Generating All Chapters</span>
+                    <span className="text-gray-400 text-sm">{progress.completed}/{progress.total} completed</span>
+                  </div>
+                  <div className="w-full bg-gray-800 rounded-full h-2">
+                    <div 
+                      className="bg-white h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${progress.percentage}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-gray-400 text-sm mt-2 font-light">
+                    Please wait while we generate all chapters. This may take several minutes.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Chapters List */}
             <div className="space-y-6">
@@ -464,7 +609,7 @@ const BookGenerator = () => {
                         )}
                         <Button
                           onClick={() => handleGenerateChapter(index)}
-                          disabled={chapter.isGenerating}
+                          disabled={chapter.isGenerating || isGeneratingAllChapters}
                           className="minimal-button flex-shrink-0"
                           size="sm"
                         >
@@ -520,6 +665,7 @@ const BookGenerator = () => {
                   setBookOutline([]);
                 }}
                 className="border-gray-600 text-gray-300 hover:bg-gray-900/50"
+                disabled={isGeneratingAllChapters}
               >
                 Start New Book
               </Button>

@@ -153,18 +153,33 @@ export async function generateChapterContent(
     Target Word Count: Approximately ${targetWords} words (focus on quality and completeness over exact word count)
     ${contextInfo}
     
-    Please write engaging, high-quality chapter content that:
-    - Flows naturally and maintains a consistent writing style
-    - Advances the main themes and narrative of the book
-    - Uses proper paragraph structure with good pacing
-    - Maintains consistency with any previous chapters
-    - Uses a professional, publishable writing style
-    - Aims for approximately ${targetWords} words while prioritizing quality and story flow
-    - Includes natural dialogue and scene descriptions where appropriate
+    IMPORTANT WRITING GUIDELINES:
+    - Write in long, detailed paragraphs (4-8 sentences each)
+    - Use fewer paragraphs but make each one substantial and immersive
+    - Focus on deep character development, rich descriptions, and meaningful dialogue
+    - Create vivid scenes that draw readers in completely
+    - Maintain excellent pacing with detailed narrative flow
+    - Each paragraph should advance the story significantly
+    - Use sophisticated, literary prose that feels professional and engaging
+    - Include sensory details, emotional depth, and atmospheric descriptions
+    - Avoid short, choppy paragraphs - aim for substantial, flowing narrative blocks
+    - Write content that feels like it belongs in a published novel
     
-    Write complete, well-developed content with natural story progression. Use clear, professional prose without any special formatting symbols. This should read like a chapter from a published book.`;
+    Please write engaging, high-quality chapter content that:
+    - Flows naturally with long, immersive paragraphs
+    - Maintains a consistent, sophisticated writing style
+    - Advances the main themes and narrative of the book significantly
+    - Uses detailed descriptions and rich character development
+    - Maintains consistency with any previous chapters
+    - Uses a professional, publishable literary style
+    - Creates compelling scenes with depth and substance
+    - Aims for approximately ${targetWords} words while prioritizing narrative quality
+    - Includes natural, meaningful dialogue woven into longer narrative passages
+    - Builds tension and maintains reader engagement throughout
+    
+    Write complete, well-developed content with substantial paragraphs and natural story progression. Use clear, professional literary prose without any special formatting symbols. This should read like a chapter from a professionally published novel with rich, detailed writing.`;
 
-  const systemPrompt = "You are a professional author writing high-quality book content. Your task is to write engaging, well-structured chapters with natural, flowing prose. Maintain a consistent style and voice throughout. Use proper paragraph breaks and professional structure. Write content that feels like it belongs in a published book. Do not use asterisks, bullet points, or any special formatting symbols in your writing.";
+  const systemPrompt = "You are a professional novelist and bestselling author known for rich, immersive storytelling. Your writing style features long, detailed paragraphs that draw readers deep into the story world. You excel at creating substantial narrative blocks with sophisticated prose, vivid descriptions, and compelling character development. Write content that feels like it belongs in a published literary work, with fewer but more substantial paragraphs that each advance the story significantly. Focus on creating an immersive reading experience with detailed, flowing narrative. Do not use asterisks, bullet points, or any special formatting symbols in your writing.";
   
   return await callGeminiAPI(prompt, systemPrompt);
 }
