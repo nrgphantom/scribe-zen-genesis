@@ -1,3 +1,4 @@
+
 async function callGeminiAPI(prompt: string, systemPrompt?: string) {
   console.log("Making API call to Google Gemini");
   
@@ -117,32 +118,7 @@ STRUCTURE: ${numChapters} chapters with logical progression
 
 Focus on real-world applications, factual accuracy, and genuine value for readers.`;
 
-  const response = await fetch(`${API_BASE_URL}/chat/completions`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      model: 'mistral-large-latest',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an expert book concept developer. Generate detailed, marketable book ideas that are both creative and commercially viable. Focus on clear structure and compelling concepts.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      max_tokens: 1000,
-      temperature: 0.8
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to generate book idea');
-  }
-
-  const data = await response.json();
-  return data.choices[0].message.content;
+  return await callGeminiAPI(prompt);
 };
 
 export const generateBookOutline = async (
@@ -192,34 +168,11 @@ Chapter 2: [Title]
 
 And so on...`;
 
-  const response = await fetch(`${API_BASE_URL}/chat/completions`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      model: 'mistral-large-latest',
-      messages: [
-        {
-          role: 'system',
-          content: bookType === "fiction" 
-            ? 'You are an expert fiction editor and story structure specialist. Create compelling, well-paced chapter outlines that ensure narrative flow and character development.'
-            : 'You are an expert non-fiction editor and educational content developer. Create logical, informative chapter outlines that build knowledge progressively and provide practical value.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      max_tokens: 1500,
-      temperature: 0.7
-    })
-  });
+  const systemPrompt = bookType === "fiction" 
+    ? 'You are an expert fiction editor and story structure specialist. Create compelling, well-paced chapter outlines that ensure narrative flow and character development.'
+    : 'You are an expert non-fiction editor and educational content developer. Create logical, informative chapter outlines that build knowledge progressively and provide practical value.';
 
-  if (!response.ok) {
-    throw new Error('Failed to generate book outline');
-  }
-
-  const data = await response.json();
-  return data.choices[0].message.content;
+  return await callGeminiAPI(prompt, systemPrompt);
 };
 
 export const generateChapterContent = async (
@@ -270,32 +223,9 @@ Requirements:
 
 Write a complete, informative chapter that provides genuine value to readers while maintaining academic rigor.`;
 
-  const response = await fetch(`${API_BASE_URL}/chat/completions`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      model: 'mistral-large-latest',
-      messages: [
-        {
-          role: 'system',
-          content: bookType === "fiction"
-            ? 'You are a professional fiction writer with expertise in crafting compelling narratives. Write engaging, high-quality chapters that captivate readers and advance the story effectively.'
-            : 'You are a professional non-fiction author and subject matter expert. Write informative, well-researched chapters that educate readers and provide practical value. Ensure factual accuracy and credibility.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      max_tokens: targetWords * 1.5, // Allow for more tokens to reach target word count
-      temperature: 0.7
-    })
-  });
+  const systemPrompt = bookType === "fiction"
+    ? 'You are a professional fiction writer with expertise in crafting compelling narratives. Write engaging, high-quality chapters that captivate readers and advance the story effectively.'
+    : 'You are a professional non-fiction author and subject matter expert. Write informative, well-researched chapters that educate readers and provide practical value. Ensure factual accuracy and credibility.';
 
-  if (!response.ok) {
-    throw new Error('Failed to generate chapter content');
-  }
-
-  const data = await response.json();
-  return data.choices[0].message.content;
+  return await callGeminiAPI(prompt, systemPrompt);
 };
