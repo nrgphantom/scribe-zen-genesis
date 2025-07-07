@@ -1,11 +1,13 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Sparkles, Loader2, Copy, Download } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2, Copy, Download, BookOpen, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { generateBookIdea } from "@/services/apiService";
 import { toast } from "sonner";
 import jsPDF from 'jspdf';
@@ -15,6 +17,7 @@ const BookIdeaGenerator = () => {
   const [bookName, setBookName] = useState("");
   const [description, setDescription] = useState("");
   const [numChapters, setNumChapters] = useState(5);
+  const [bookType, setBookType] = useState<"fiction" | "nonfiction">("fiction");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedIdea, setGeneratedIdea] = useState("");
 
@@ -28,8 +31,8 @@ const BookIdeaGenerator = () => {
     setGeneratedIdea("");
     
     try {
-      console.log("Generating book idea with:", { bookName, description, numChapters });
-      const idea = await generateBookIdea(bookName.trim() || undefined, description.trim() || undefined, numChapters);
+      console.log("Generating book idea with:", { bookName, description, numChapters, bookType });
+      const idea = await generateBookIdea(bookName.trim() || undefined, description.trim() || undefined, numChapters, bookType);
       setGeneratedIdea(idea);
       toast.success("Book idea generated successfully!");
     } catch (error) {
@@ -156,89 +159,133 @@ const BookIdeaGenerator = () => {
         state: {
           title: title || bookName || "Untitled Book",
           description: description || generatedIdea.substring(0, 300),
-          numChapters: numChapters
+          numChapters: numChapters,
+          bookType: bookType
         }
       });
     } else {
       navigate("/book-generator", {
         state: {
-          numChapters: numChapters
+          numChapters: numChapters,
+          bookType: bookType
         }
       });
     }
   };
 
   return (
-    <div className="min-h-screen bg-black p-6">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate("/")}
-            className="text-white hover:text-white mb-6 hover:bg-gray-900/50"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Home
-          </Button>
-          
-          <div className="flex items-center mb-4">
-            <img 
-              src="/pen.png" 
-              alt="ZedScribe Logo" 
-              className="w-8 h-8 mr-4"
-            />
-            <h1 className="text-4xl font-light text-white tracking-tight">
-              Book Idea Generator
-            </h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {/* Professional Header */}
+      <header className="bg-black/20 backdrop-blur-sm border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <img 
+                src="/pen.png" 
+                alt="ZedScribe Logo" 
+                className="w-10 h-10"
+              />
+              <div>
+                <h1 className="text-2xl font-bold text-white">ZedScribe</h1>
+                <p className="text-sm text-gray-300">Professional AI Book Writing Platform</p>
+              </div>
+            </div>
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate("/")}
+              className="text-white hover:text-white hover:bg-white/10"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Home
+            </Button>
           </div>
-          <p className="text-xl text-gray-400 font-light">
-            Let AI spark your creativity with unique book concepts and detailed outlines.
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Page Title Section */}
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-bold text-white mb-4">Book Idea Generator</h2>
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+            Transform your creative vision into a comprehensive book concept with AI-powered precision. 
+            Choose between fiction and non-fiction to get tailored, professional-grade ideas.
           </p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Input Form */}
-          <Card className="minimal-card">
-            <CardHeader>
-              <CardTitle className="text-2xl text-white font-light flex items-center">
-                <Sparkles className="w-6 h-6 text-white mr-3" />
-                Create Your Idea
+          {/* Enhanced Input Form */}
+          <Card className="bg-white/5 backdrop-blur-sm border-white/10 shadow-2xl">
+            <CardHeader className="pb-6">
+              <CardTitle className="text-2xl text-white font-bold flex items-center">
+                <Sparkles className="w-6 h-6 text-purple-400 mr-3" />
+                Create Your Book Concept
               </CardTitle>
-              <CardDescription className="text-gray-400 font-light">
-                Provide any details you have, or leave blank for completely random generation.
+              <CardDescription className="text-gray-300 text-base">
+                Provide your preferences below to generate a professional book concept tailored to your vision.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Book Type Selection */}
+              <div className="space-y-4">
+                <Label className="text-white font-semibold text-base">Book Type *</Label>
+                <RadioGroup 
+                  value={bookType} 
+                  onValueChange={(value) => setBookType(value as "fiction" | "nonfiction")}
+                  className="grid grid-cols-2 gap-4"
+                >
+                  <div className="flex items-center space-x-3 bg-white/5 p-4 rounded-lg border border-white/10 hover:bg-white/10 transition-colors">
+                    <RadioGroupItem value="fiction" id="fiction" className="border-purple-400 text-purple-400" />
+                    <div className="flex items-center space-x-2">
+                      <BookOpen className="w-5 h-5 text-purple-400" />
+                      <label htmlFor="fiction" className="text-white font-medium cursor-pointer">
+                        Fiction
+                      </label>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3 bg-white/5 p-4 rounded-lg border border-white/10 hover:bg-white/10 transition-colors">
+                    <RadioGroupItem value="nonfiction" id="nonfiction" className="border-blue-400 text-blue-400" />
+                    <div className="flex items-center space-x-2">
+                      <GraduationCap className="w-5 h-5 text-blue-400" />
+                      <label htmlFor="nonfiction" className="text-white font-medium cursor-pointer">
+                        Non-Fiction
+                      </label>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </div>
+
               <div className="space-y-2">
-                <Label htmlFor="bookName" className="text-white font-light">
-                  Book Name (Optional)
+                <Label htmlFor="bookName" className="text-white font-semibold">
+                  Book Title (Optional)
                 </Label>
                 <Input
                   id="bookName"
                   placeholder="Enter a book title if you have one in mind..."
                   value={bookName}
                   onChange={(e) => setBookName(e.target.value)}
-                  className="minimal-input"
+                  className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-purple-400 focus:ring-purple-400/20"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description" className="text-white font-light">
-                  Description (Optional)
+                <Label htmlFor="description" className="text-white font-semibold">
+                  Book Description (Optional)
                 </Label>
                 <Textarea
                   id="description"
-                  placeholder="Describe any themes, genres, or concepts you'd like to explore..."
+                  placeholder={bookType === "fiction" 
+                    ? "Describe themes, characters, plot ideas, or setting you'd like to explore..." 
+                    : "Describe the topic, target audience, key concepts, or problems you want to address..."
+                  }
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
-                  className="minimal-input resize-none"
+                  className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-purple-400 focus:ring-purple-400/20 resize-none"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="chapters" className="text-white font-light">
+                <Label htmlFor="chapters" className="text-white font-semibold">
                   Number of Chapters (1-50) *
                 </Label>
                 <Input
@@ -248,7 +295,7 @@ const BookIdeaGenerator = () => {
                   max="50"
                   value={numChapters}
                   onChange={(e) => setNumChapters(parseInt(e.target.value) || 1)}
-                  className="minimal-input"
+                  className="bg-white/5 border-white/20 text-white focus:border-purple-400 focus:ring-purple-400/20"
                   required
                 />
               </div>
@@ -256,58 +303,67 @@ const BookIdeaGenerator = () => {
               <Button 
                 onClick={handleGenerate}
                 disabled={isGenerating}
-                className="w-full minimal-button py-3"
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
               >
                 {isGenerating ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Generating Idea...
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Generating Your {bookType === "fiction" ? "Fiction" : "Non-Fiction"} Idea...
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Generate Book Idea
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Generate {bookType === "fiction" ? "Fiction" : "Non-Fiction"} Book Idea
                   </>
                 )}
               </Button>
 
-              <div className="bg-gray-900/30 rounded-lg p-4 border border-gray-800/50">
-                <p className="text-sm text-gray-400 text-center font-light">
-                  💡 <strong>Tip:</strong> Leave fields empty for completely random, creative ideas!
+              <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg p-4 border border-purple-500/20">
+                <p className="text-sm text-gray-300 text-center">
+                  💡 <strong>Pro Tip:</strong> {bookType === "fiction" 
+                    ? "Leave fields empty for completely original fictional concepts with unique characters and plots!"
+                    : "Leave fields empty for well-researched, fact-based concepts with real-world applications!"
+                  }
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* Generated Idea Display */}
-          <Card className="minimal-card">
+          {/* Enhanced Generated Idea Display */}
+          <Card className="bg-white/5 backdrop-blur-sm border-white/10 shadow-2xl">
             <CardHeader>
-              <CardTitle className="text-2xl text-white font-light">Generated Idea</CardTitle>
-              <CardDescription className="text-gray-400 font-light">
-                Your AI-generated book concept will appear here.
+              <CardTitle className="text-2xl text-white font-bold">Generated Book Concept</CardTitle>
+              <CardDescription className="text-gray-300 text-base">
+                Your AI-generated {bookType === "fiction" ? "fictional" : "non-fictional"} book concept will appear here.
               </CardDescription>
             </CardHeader>
             <CardContent>
               {isGenerating ? (
-                <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                  <Loader2 className="w-8 h-8 text-white animate-spin" />
-                  <p className="text-gray-400 font-light">Creating your unique book idea...</p>
+                <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                  <Loader2 className="w-12 h-12 text-purple-400 animate-spin" />
+                  <p className="text-gray-300 font-medium text-lg">Creating your unique book concept...</p>
+                  <p className="text-gray-400 text-sm">
+                    {bookType === "fiction" 
+                      ? "Crafting compelling characters and narrative..." 
+                      : "Researching facts and structuring informative content..."
+                    }
+                  </p>
                 </div>
               ) : generatedIdea ? (
-                <div className="space-y-4">
-                  <div className="bg-gray-900/50 rounded-lg p-6 border border-gray-800/50">
-                    <div className="text-content whitespace-pre-wrap text-sm">
+                <div className="space-y-6">
+                  <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-lg p-6 border border-white/10 backdrop-blur-sm">
+                    <div className="text-content whitespace-pre-wrap text-gray-100 leading-relaxed">
                       {generatedIdea}
                     </div>
                   </div>
                   
-                  {/* Action Buttons */}
+                  {/* Enhanced Action Buttons */}
                   <div className="flex flex-col gap-3">
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                       <Button 
                         onClick={handleCopyText}
                         variant="outline"
-                        className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-900/50"
+                        className="flex-1 bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/30"
                       >
                         <Copy className="w-4 h-4 mr-2" />
                         Copy Text
@@ -315,7 +371,7 @@ const BookIdeaGenerator = () => {
                       <Button 
                         onClick={handleDownloadPDF}
                         variant="outline"
-                        className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-900/50"
+                        className="flex-1 bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/30"
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Download PDF
@@ -323,21 +379,26 @@ const BookIdeaGenerator = () => {
                     </div>
                     <Button 
                       onClick={handleTurnIntoFullBook}
-                      className="w-full minimal-button py-3"
+                      className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-semibold py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
                     >
-                      Turn This Into a Full Book
+                      Turn This Into a Full {bookType === "fiction" ? "Fiction" : "Non-Fiction"} Book
                     </Button>
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                  <img 
-                    src="/pen.png" 
-                    alt="ZedScribe Logo" 
-                    className="w-16 h-16 mb-4 opacity-50"
-                  />
-                  <p className="text-center font-light">
-                    Your generated book idea will appear here after clicking "Generate Book Idea"
+                <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                  <div className="bg-white/5 rounded-full p-6 mb-6">
+                    <img 
+                      src="/pen.png" 
+                      alt="ZedScribe Logo" 
+                      className="w-16 h-16 opacity-60"
+                    />
+                  </div>
+                  <p className="text-center font-medium text-lg mb-2">
+                    Ready to Generate Your Book Concept
+                  </p>
+                  <p className="text-center text-gray-500">
+                    Your professional {bookType} book idea will appear here
                   </p>
                 </div>
               )}
