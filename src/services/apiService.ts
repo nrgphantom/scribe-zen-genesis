@@ -1,4 +1,3 @@
-
 async function callGeminiAPI(prompt: string, systemPrompt?: string) {
   console.log("Making API call to Google Gemini");
   
@@ -71,158 +70,232 @@ function cleanText(content: string): string {
   return content;
 }
 
-export async function generateBookIdea(bookName?: string, description?: string, numChapters?: number, bookType?: "fiction" | "nonfiction") {
-  console.log("Generating book idea with Google Gemini API");
-  
-  const chapterInfo = numChapters ? `\nNumber of Chapters: ${numChapters}` : '';
-  const typeSpecific = bookType === "nonfiction" ? "non-fiction" : "fiction";
-  
-  const prompt = bookName || description 
-    ? `Create a comprehensive ${typeSpecific} book concept based on the following information:
-       ${bookName ? `Book Title: ${bookName}` : ''}
-       ${description ? `Book Description: ${description}` : ''}${chapterInfo}
-       Book Type: ${typeSpecific.toUpperCase()}
-       
-       Please provide a complete ${typeSpecific} book idea that includes:
-       
-       Title: [Compelling ${typeSpecific} title if not already provided]
-       Genre: [Specific ${typeSpecific} genre and target audience]
-       Description: [Main premise and central themes in 2-3 paragraphs]
-       ${numChapters ? `Chapter Outline: [Brief outline for ${numChapters} chapters]` : 'Chapter Outline: [Brief outline with 8-12 chapters]'}
-       Unique Elements: [What makes this ${typeSpecific} book special and marketable]
-       
-       ${bookType === "nonfiction" ? 
-         "IMPORTANT: For non-fiction, ensure all content is factual, research-based, and includes real data, statistics, case studies, and credible information. Focus on practical value and educational content." :
-         "IMPORTANT: For fiction, create compelling characters, engaging plot elements, and immersive world-building. Focus on narrative structure and emotional engagement."
-       }
-       
-       Write this as a clear, engaging ${typeSpecific} book concept. Use proper paragraph structure and avoid any special formatting symbols.`
-    : `Create an original and compelling ${typeSpecific} book concept that includes:
-       ${chapterInfo}
-       Book Type: ${typeSpecific.toUpperCase()}
-       
-       Title: [Unique and marketable ${typeSpecific} title]
-       Genre: [Clear ${typeSpecific} genre and target audience identification]
-       Description: [Engaging premise and main themes in 2-3 paragraphs]
-       ${numChapters ? `Chapter Outline: [Brief outline for ${numChapters} chapters]` : 'Chapter Outline: [Brief outline with 8-12 chapters]'}
-       Unique Elements: [What makes this ${typeSpecific} book special and different]
-       
-       ${bookType === "nonfiction" ? 
-         "IMPORTANT: For non-fiction, ensure all content is factual, research-based, and includes real data, statistics, case studies, and credible information. Focus on practical value, educational content, and real-world applications." :
-         "IMPORTANT: For fiction, create compelling characters, engaging plot elements, immersive world-building, and strong narrative structure. Focus on emotional engagement and storytelling."
-       }
-       
-       Write this as a clear, engaging ${typeSpecific} book concept. Use proper paragraph structure and avoid any special formatting symbols.`;
+export const generateBookIdea = async (
+  topic: string, 
+  targetAudience: string, 
+  bookType: "fiction" | "nonfiction",
+  numChapters: number
+): Promise<string> => {
+  const prompt = bookType === "fiction" 
+    ? `Generate a compelling fiction book idea for "${topic}" targeting ${targetAudience}. Include:
 
-  const systemPrompt = bookType === "nonfiction" ?
-    "You are an experienced non-fiction author, researcher, and publishing expert specializing in educational and informational content. Create detailed, factual, and research-based book concepts that provide real value to readers. Always include genuine facts, statistics, case studies, and credible information. Focus on practical applications, real-world examples, and educational value. Ensure all content is accurate and evidence-based. Write in clear, professional prose using proper paragraph structure. Do not use asterisks, bullet points, or any special formatting symbols in your response." :
-    "You are an experienced fiction author and publishing expert specializing in compelling storytelling. Create detailed, engaging fictional book concepts with strong characters, immersive world-building, and captivating plots. Focus on narrative structure, character development, and emotional engagement. Write in clear, professional prose using proper paragraph structure. Do not use asterisks, bullet points, or any special formatting symbols in your response.";
-  
-  return await callGeminiAPI(prompt, systemPrompt);
-}
+TITLE: [Provide a captivating title]
 
-export async function generateBookOutline(title: string, description: string, chapters: number, bookType?: "fiction" | "nonfiction") {
-  console.log("Generating book outline with Google Gemini API");
-  
-  const typeSpecific = bookType === "nonfiction" ? "non-fiction" : "fiction";
-  
-  const prompt = `Create a detailed ${typeSpecific} book outline for the following book:
-    
-    Book Title: ${title}
-    Book Description: ${description}
-    Required Number of Chapters: ${chapters}
-    Book Type: ${typeSpecific.toUpperCase()}
-    
-    Please provide a comprehensive ${typeSpecific} outline that includes:
-    
-    1. A brief book summary (2-3 paragraphs)
-    2. Complete chapter breakdown with the following for each chapter:
-       - Chapter number and descriptive title
-       - Detailed chapter summary (3-4 sentences explaining what happens)
-       - Key points and objectives for that chapter
-    
-    ${bookType === "nonfiction" ? 
-      "IMPORTANT: For non-fiction, ensure each chapter includes factual content, research references, real examples, case studies, and practical applications. Focus on educational value and actionable insights." :
-      "IMPORTANT: For fiction, ensure each chapter advances the plot, develops characters, and maintains narrative flow. Include key story beats, character arcs, and dramatic elements."
-    }
-    
-    Format each chapter clearly as:
-    Chapter 1: [Descriptive Title]
-    [Detailed summary content]
-    
-    Write in clear, professional prose without any special formatting symbols. Make sure each chapter builds logically on the previous ones.`;
+PREMISE: [2-3 sentences describing the main story]
 
-  const systemPrompt = bookType === "nonfiction" ?
-    "You are a professional non-fiction book editor and author with extensive experience in creating educational and informational book outlines. Your task is to create well-structured, factual, and research-based outlines that follow proper educational principles and logical progression. Include real data, examples, and practical applications. Write in clear, professional prose without using asterisks, bullet points, or any special formatting symbols. Format chapters clearly with numbers and descriptive titles." :
-    "You are a professional fiction book editor and author with extensive experience in creating compelling story outlines. Your task is to create well-structured, engaging fictional outlines that follow proper storytelling principles, character development arcs, and narrative progression. Write in clear, professional prose without using asterisks, bullet points, or any special formatting symbols. Format chapters clearly with numbers and descriptive titles.";
-  
-  return await callGeminiAPI(prompt, systemPrompt);
-}
+MAIN CHARACTERS: [Brief description of key characters]
 
-export async function generateChapterContent(
-  bookTitle: string, 
-  chapterTitle: string, 
-  chapterNumber: number, 
-  bookDescription: string, 
+SETTING: [Where and when the story takes place]
+
+CONFLICT: [The central conflict or challenge]
+
+THEMES: [Major themes explored]
+
+TARGET AUDIENCE: ${targetAudience}
+
+STRUCTURE: ${numChapters} chapters with engaging plot progression
+
+Make it creative, engaging, and marketable for the target audience.`
+    
+    : `Generate a comprehensive non-fiction book idea for "${topic}" targeting ${targetAudience}. Include:
+
+TITLE: [Provide a clear, compelling title]
+
+PURPOSE: [What problem does this book solve or what knowledge does it provide?]
+
+TARGET AUDIENCE: ${targetAudience}
+
+KEY CONCEPTS: [Main topics and concepts covered]
+
+UNIQUE ANGLE: [What makes this book different from others on the topic?]
+
+PRACTICAL VALUE: [How will readers benefit from this book?]
+
+RESEARCH APPROACH: [How will you ensure factual accuracy and credibility?]
+
+STRUCTURE: ${numChapters} chapters with logical progression
+
+Focus on real-world applications, factual accuracy, and genuine value for readers.`;
+
+  const response = await fetch(`${API_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      model: 'mistral-large-latest',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert book concept developer. Generate detailed, marketable book ideas that are both creative and commercially viable. Focus on clear structure and compelling concepts.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      max_tokens: 1000,
+      temperature: 0.8
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to generate book idea');
+  }
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+};
+
+export const generateBookOutline = async (
+  title: string,
+  description: string,
+  numChapters: number,
+  bookType: "fiction" | "nonfiction"
+): Promise<string> => {
+  const prompt = bookType === "fiction"
+    ? `Create a detailed ${numChapters}-chapter outline for the fiction book "${title}".
+
+Book Description: ${description}
+
+Provide:
+- Brief book summary
+- Chapter-by-chapter breakdown with titles and 2-3 sentence descriptions
+- Character development arc
+- Plot progression and pacing
+- Key themes and conflicts
+
+Format as:
+Chapter 1: [Title]
+- [Description]
+
+Chapter 2: [Title]
+- [Description]
+
+And so on...`
+
+    : `Create a detailed ${numChapters}-chapter outline for the non-fiction book "${title}".
+
+Book Description: ${description}
+
+Provide:
+- Book overview and objectives
+- Chapter-by-chapter breakdown with titles and key topics
+- Learning objectives for each chapter
+- Logical flow of information
+- Practical applications and takeaways
+
+Ensure factual accuracy and educational value. Format as:
+Chapter 1: [Title]
+- [Key topics and objectives]
+
+Chapter 2: [Title]
+- [Key topics and objectives]
+
+And so on...`;
+
+  const response = await fetch(`${API_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      model: 'mistral-large-latest',
+      messages: [
+        {
+          role: 'system',
+          content: bookType === "fiction" 
+            ? 'You are an expert fiction editor and story structure specialist. Create compelling, well-paced chapter outlines that ensure narrative flow and character development.'
+            : 'You are an expert non-fiction editor and educational content developer. Create logical, informative chapter outlines that build knowledge progressively and provide practical value.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      max_tokens: 1500,
+      temperature: 0.7
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to generate book outline');
+  }
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+};
+
+export const generateChapterContent = async (
+  bookTitle: string,
+  chapterTitle: string,
+  chapterNumber: number,
+  bookDescription: string,
   targetWords: number,
-  previousChapters?: string[],
-  bookType?: "fiction" | "nonfiction"
-) {
-  console.log("Generating chapter content with Google Gemini API");
-  
-  const typeSpecific = bookType === "nonfiction" ? "non-fiction" : "fiction";
-  const contextInfo = previousChapters && previousChapters.length > 0 
-    ? `\n\nContext from previous chapters: ${previousChapters.join(". ")}`
-    : "";
+  previousChapters: string[],
+  bookType: "fiction" | "nonfiction"
+): Promise<string> => {
+  const previousContext = previousChapters.length > 0 
+    ? `Previous chapters covered: ${previousChapters.join(', ')}`
+    : 'This is the first chapter.';
 
-  const prompt = `Write Chapter ${chapterNumber} titled "${chapterTitle}" for the ${typeSpecific} book "${bookTitle}".
-    
-    Book Description: ${bookDescription}
-    Book Type: ${typeSpecific.toUpperCase()}
-    Target Word Count: Approximately ${targetWords} words (focus on quality and completeness over exact word count)
-    ${contextInfo}
-    
-    ${bookType === "nonfiction" ? 
-      `IMPORTANT NON-FICTION GUIDELINES:
-      - Include factual information, real data, statistics, and research findings
-      - Provide practical examples, case studies, and real-world applications
-      - Reference credible sources and evidence-based content
-      - Structure content with clear explanations and actionable insights
-      - Use educational and informative writing style
-      - Include concrete examples and practical advice
-      - Ensure all information is accurate and well-researched
-      - Write in long, detailed paragraphs (4-8 sentences each) with substantial educational content
-      - Focus on providing genuine value and learning outcomes for readers` :
-      
-      `IMPORTANT FICTION GUIDELINES:
-      - Write in long, detailed paragraphs (4-8 sentences each)
-      - Use fewer paragraphs but make each one substantial and immersive
-      - Focus on deep character development, rich descriptions, and meaningful dialogue
-      - Create vivid scenes that draw readers in completely
-      - Maintain excellent pacing with detailed narrative flow
-      - Each paragraph should advance the story significantly
-      - Use sophisticated, literary prose that feels professional and engaging
-      - Include sensory details, emotional depth, and atmospheric descriptions
-      - Avoid short, choppy paragraphs - aim for substantial, flowing narrative blocks`
-    }
-    
-    Please write engaging, high-quality chapter content that:
-    - Flows naturally with long, immersive paragraphs
-    - Maintains a consistent, sophisticated writing style
-    - Advances the main themes and narrative of the book significantly
-    - Uses detailed descriptions and ${bookType === "nonfiction" ? "factual information" : "rich character development"}
-    - Maintains consistency with any previous chapters
-    - Uses a professional, publishable ${typeSpecific} style
-    - Creates compelling ${bookType === "nonfiction" ? "educational content" : "scenes"} with depth and substance
-    - Aims for approximately ${targetWords} words while prioritizing quality
-    - ${bookType === "nonfiction" ? "Includes real data, examples, and practical applications" : "Includes natural, meaningful dialogue woven into longer narrative passages"}
-    - Builds ${bookType === "nonfiction" ? "knowledge and understanding" : "tension and maintains reader engagement"} throughout
-    
-    Write complete, well-developed content with substantial paragraphs and ${bookType === "nonfiction" ? "educational progression" : "natural story progression"}. Use clear, professional ${typeSpecific} prose without any special formatting symbols. This should read like a chapter from a professionally published ${typeSpecific} book with ${bookType === "nonfiction" ? "rich, informative content" : "rich, detailed writing"}.`;
+  const prompt = bookType === "fiction"
+    ? `Write Chapter ${chapterNumber} titled "${chapterTitle}" for the fiction book "${bookTitle}".
 
-  const systemPrompt = bookType === "nonfiction" ?
-    "You are a professional non-fiction author and expert researcher known for creating comprehensive, educational content. Your writing style features long, detailed paragraphs that provide substantial factual information, real data, case studies, and practical applications. You excel at creating informative content with sophisticated prose, credible research, and actionable insights. Write content that feels like it belongs in a published educational work, with fewer but more substantial paragraphs that each provide significant learning value. Focus on creating an informative reading experience with detailed, factual content. Include real statistics, examples, and evidence-based information. Do not use asterisks, bullet points, or any special formatting symbols in your writing." :
-    "You are a professional novelist and bestselling author known for rich, immersive storytelling. Your writing style features long, detailed paragraphs that draw readers deep into the story world. You excel at creating substantial narrative blocks with sophisticated prose, vivid descriptions, and compelling character development. Write content that feels like it belongs in a published literary work, with fewer but more substantial paragraphs that each advance the story significantly. Focus on creating an immersive reading experience with detailed, flowing narrative. Do not use asterisks, bullet points, or any special formatting symbols in your writing.";
-  
-  return await callGeminiAPI(prompt, systemPrompt);
-}
+Book Description: ${bookDescription}
+${previousContext}
+Target Length: Approximately ${targetWords} words
+
+Requirements:
+- Engaging narrative voice and style
+- Well-developed characters and dialogue
+- Vivid descriptions and settings
+- Clear plot progression
+- Maintain consistency with previous chapters
+- Create hooks to keep readers engaged
+- Proper pacing and tension
+
+Write a complete, polished chapter that advances the story while maintaining high literary quality.`
+
+    : `Write Chapter ${chapterNumber} titled "${chapterTitle}" for the non-fiction book "${bookTitle}".
+
+Book Description: ${bookDescription}
+${previousContext}
+Target Length: Approximately ${targetWords} words
+
+Requirements:
+- Clear, authoritative writing style
+- Well-researched, factual content
+- Practical examples and case studies
+- Actionable insights and takeaways
+- Logical structure with smooth transitions
+- Credible sources and references where appropriate
+- Engaging yet professional tone
+
+Write a complete, informative chapter that provides genuine value to readers while maintaining academic rigor.`;
+
+  const response = await fetch(`${API_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      model: 'mistral-large-latest',
+      messages: [
+        {
+          role: 'system',
+          content: bookType === "fiction"
+            ? 'You are a professional fiction writer with expertise in crafting compelling narratives. Write engaging, high-quality chapters that captivate readers and advance the story effectively.'
+            : 'You are a professional non-fiction author and subject matter expert. Write informative, well-researched chapters that educate readers and provide practical value. Ensure factual accuracy and credibility.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      max_tokens: targetWords * 1.5, // Allow for more tokens to reach target word count
+      temperature: 0.7
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to generate chapter content');
+  }
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+};

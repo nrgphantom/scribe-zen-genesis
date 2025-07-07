@@ -9,6 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      book_generations: {
+        Row: {
+          book_description: string | null
+          book_title: string
+          book_type: string
+          chapters_generated: number | null
+          created_at: string
+          id: string
+          total_chapters: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          book_description?: string | null
+          book_title: string
+          book_type: string
+          chapters_generated?: number | null
+          created_at?: string
+          id?: string
+          total_chapters: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          book_description?: string | null
+          book_title?: string
+          book_type?: string
+          chapters_generated?: number | null
+          created_at?: string
+          id?: string
+          total_chapters?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       strategies: {
         Row: {
           created_at: string
@@ -40,6 +76,45 @@ export type Database = {
           performance?: number | null
           strategy_code?: string
           training_status?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      subscribers: {
+        Row: {
+          chapters_generated: number | null
+          created_at: string
+          email: string
+          id: string
+          stripe_customer_id: string | null
+          subscribed: boolean
+          subscription_end: string | null
+          subscription_tier: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          chapters_generated?: number | null
+          created_at?: string
+          email: string
+          id?: string
+          stripe_customer_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          chapters_generated?: number | null
+          created_at?: string
+          email?: string
+          id?: string
+          stripe_customer_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          subscription_tier?: string | null
           updated_at?: string
           user_id?: string | null
         }
