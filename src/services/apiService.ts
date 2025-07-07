@@ -75,10 +75,20 @@ export const generateBookIdea = async (
   topic: string, 
   targetAudience: string, 
   bookType: "fiction" | "nonfiction",
-  numChapters: number
+  numChapters: number,
+  customDescription?: string
 ): Promise<string> => {
+  // If user provided a custom description, use it directly
+  if (customDescription && customDescription.trim()) {
+    return customDescription.trim();
+  }
+
+  // Auto-generate topic and audience if not provided
+  const finalTopic = topic.trim() || (bookType === "fiction" ? "adventure and discovery" : "personal development");
+  const finalAudience = targetAudience.trim() || "general readers";
+
   const prompt = bookType === "fiction" 
-    ? `Generate a compelling fiction book idea for "${topic}" targeting ${targetAudience}. Include:
+    ? `Generate a compelling fiction book idea for "${finalTopic}" targeting ${finalAudience}. Include:
 
 TITLE: [Provide a captivating title]
 
@@ -92,19 +102,19 @@ CONFLICT: [The central conflict or challenge]
 
 THEMES: [Major themes explored]
 
-TARGET AUDIENCE: ${targetAudience}
+TARGET AUDIENCE: ${finalAudience}
 
 STRUCTURE: ${numChapters} chapters with engaging plot progression
 
 Make it creative, engaging, and marketable for the target audience.`
     
-    : `Generate a comprehensive non-fiction book idea for "${topic}" targeting ${targetAudience}. Include:
+    : `Generate a comprehensive non-fiction book idea for "${finalTopic}" targeting ${finalAudience}. Include:
 
 TITLE: [Provide a clear, compelling title]
 
 PURPOSE: [What problem does this book solve or what knowledge does it provide?]
 
-TARGET AUDIENCE: ${targetAudience}
+TARGET AUDIENCE: ${finalAudience}
 
 KEY CONCEPTS: [Main topics and concepts covered]
 

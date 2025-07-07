@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Lightbulb, Loader2, LogOut, BookOpen, User } from "lucide-react";
+import { ArrowLeft, Lightbulb, Loader2, LogOut, BookOpen, User, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,20 +11,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { generateBookIdea } from "@/services/apiService";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useProfile } from "@/hooks/useProfile";
+import ProfileModal from "@/components/ProfileModal";
 
 const BookIdeaGenerator = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { profile } = useProfile();
   const [topic, setTopic] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
   const [bookType, setBookType] = useState<"fiction" | "nonfiction">("fiction");
   const [numChapters, setNumChapters] = useState<number | "">("");
+  const [customDescription, setCustomDescription] = useState("");
   const [generatedIdea, setGeneratedIdea] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const generateIdea = async () => {
-    if (!topic.trim() || !targetAudience.trim() || !numChapters) {
-      toast.error("Please fill in all fields.");
+    if (!numChapters) {
+      toast.error("Please enter the number of chapters.");
       return;
     }
 
@@ -37,9 +42,20 @@ const BookIdeaGenerator = () => {
     setGeneratedIdea("");
     
     try {
-      const idea = await generateBookIdea(topic, targetAudience, bookType, numChapters);
+      const idea = await generateBookIdea(
+        topic, 
+        targetAudience, 
+        bookType, 
+        numChapters, 
+        customDescription
+      );
       setGeneratedIdea(idea);
-      toast.success("Book idea generated successfully!");
+      
+      if (customDescription && customDescription.trim()) {
+        toast.success("Using your custom book description!");
+      } else {
+        toast.success("Book idea generated successfully!");
+      }
     } catch (error) {
       console.error("Error generating idea:", error);
       toast.error("Failed to generate idea. Please try again.");
@@ -51,6 +67,19 @@ const BookIdeaGenerator = () => {
   const handleTurnIntoBook = () => {
     if (!generatedIdea) {
       toast.error("Please generate a book idea first.");
+      return;
+    }
+
+    // If using custom description, extract title differently
+    if (customDescription && customDescription.trim()) {
+      navigate("/book-generator", {
+        state: {
+          title: `My ${bookType === "fiction" ? "Fiction" : "Non-Fiction"} Book`,
+          description: generatedIdea,
+          numChapters,
+          bookType
+        }
+      });
       return;
     }
 
@@ -80,6 +109,8 @@ const BookIdeaGenerator = () => {
     navigate("/");
   };
 
+  const displayName = profile?.username || profile?.full_name || user?.email;
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
@@ -100,8 +131,16 @@ const BookIdeaGenerator = () => {
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 text-gray-300">
                 <User className="w-4 h-4" />
-                <span className="text-sm">{user?.email}</span>
+                <span className="text-sm">{displayName}</span>
               </div>
+              <Button 
+                variant="ghost" 
+                onClick={() => setShowProfileModal(true)}
+                className="text-gray-300 hover:text-white hover:bg-gray-800"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Profile
+              </Button>
               <Button 
                 variant="ghost" 
                 onClick={() => navigate("/")}
@@ -140,13 +179,25 @@ const BookIdeaGenerator = () => {
               Generate Your Book Idea
             </CardTitle>
             <CardDescription className="text-gray-400 text-base">
-              Provide your concept details and let AI create a structured book idea
+              Fill in what you know, leave the rest blank (except chapters) and we'll generate it for you
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-white font-semibold">Book Description (Optional)</Label>
+              <Textarea
+                id="description"
+                placeholder="If you have a book idea in mind, describe it here. Otherwise, leave blank and we'll generate one for you based on the fields below."
+                value={customDescription}
+                onChange={(e) => setCustomDescription(e.target.value)}
+                className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-gray-600 focus:ring-gray-600/20 min-h-[100px]"
+                rows={4}
+              />
+            </div>
+
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="topic" className="text-white font-semibold">Topic/Theme *</Label>
+                <Label htmlFor="topic" className="text-white font-semibold">Topic/Theme (Optional)</Label>
                 <Input
                   id="topic"
                   placeholder="e.g., Space exploration, Medieval fantasy, Personal finance"
@@ -157,7 +208,7 @@ const BookIdeaGenerator = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="audience" className="text-white font-semibold">Target Audience *</Label>
+                <Label htmlFor="audience" className="text-white font-semibold">Target Audience (Optional)</Label>
                 <Input
                   id="audience"
                   placeholder="e.g., Young adults, Business professionals, Children"
@@ -225,7 +276,7 @@ const BookIdeaGenerator = () => {
             <CardHeader>
               <CardTitle className="text-2xl text-white font-bold">Your Generated Book Idea</CardTitle>
               <CardDescription className="text-gray-400 text-base">
-                Here's your AI-generated book concept ready for development
+                Here's your book concept ready for development
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -247,6 +298,11 @@ const BookIdeaGenerator = () => {
           </Card>
         )}
       </div>
+
+      <ProfileModal 
+        isOpen={showProfileModal} 
+        onClose={() => setShowProfileModal(false)} 
+      />
     </div>
   );
 };
